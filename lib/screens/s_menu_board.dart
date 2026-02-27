@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/menu_provider.dart';
 import '../providers/aoa_provider.dart';
+import '../providers/cart_provider.dart';
 import '../models/m_drink.dart';
 import '../widgets/w_menu_app_bar.dart';
 import '../widgets/w_menu_sidebar.dart';
@@ -76,9 +77,9 @@ class MenuBoardScreen extends ConsumerWidget {
     return GridView.builder(
       padding: EdgeInsets.zero,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 6, // 사진처럼 6열 배치
-        childAspectRatio: 0.7, // 사진 속 카드의 세로 비율 반영
-        crossAxisSpacing: 0, // 카드 간 테두리가 겹치도록 설정
+        crossAxisCount: 5, // 사진처럼 6열 배치
+        childAspectRatio: 0.805, // 사진 속 카드의 세로 비율 반영
+        crossAxisSpacing: 0, // 카드 내부 margin으로 간격 조절
         mainAxisSpacing: 0,
       ),
       itemCount: menuList.length,
@@ -87,6 +88,7 @@ class MenuBoardScreen extends ConsumerWidget {
         return WMenuItemCard(
           item: item,
           onTap: () {
+            ref.read(cartProvider.notifier).addToCart(item);
             ref.read(aoaProvider.notifier).sendOrderStatus('${item.name} 선택됨');
           },
         );

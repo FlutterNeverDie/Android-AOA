@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import '../providers/cart_provider.dart';
 
-class WMenuSidebar extends StatelessWidget {
+class WMenuSidebar extends ConsumerWidget {
   const WMenuSidebar({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cart = ref.watch(cartProvider);
+    final cartNotifier = ref.read(cartProvider.notifier);
+
     return Container(
       width: 320,
       color: const Color(0xFFF1F5F9), // 연한 그레이 배경
@@ -12,12 +18,12 @@ class WMenuSidebar extends StatelessWidget {
         children: [
           // 장바구니 타이틀
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
             color: Colors.white,
             child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(Icons.shopping_basket_outlined, color: Colors.black54),
+                Icon(Icons.shopping_cart, color: Colors.black54, size: 30,),
                 SizedBox(width: 10),
                 Text(
                   '장바구니',
@@ -35,14 +41,16 @@ class WMenuSidebar extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
             color: const Color(0xFF1E293B),
-            child: const Row(
+            child:  Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '음료 / 가격',
+                  '음료 / 가격 / 수량',
                   style: TextStyle(color: Colors.white, fontSize: 13),
                 ),
-                Text('삭제', style: TextStyle(color: Colors.white, fontSize: 13)),
+                InkWell(
+                    onTap:  () => cartNotifier.clearCart(),
+                    child: Text('삭제', style: TextStyle(color: Colors.white, fontSize: 13))),
               ],
             ),
           ),
@@ -56,39 +64,100 @@ class WMenuSidebar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.black12),
               ),
-              child: const Center(
-                child: Text(
-                  '선택된 음료가 없습니다.',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ),
+              child: cart.items.isEmpty
+                  ? const Center(
+                      child: Text(
+                        '선택된 음료가 없습니다.',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: cart.items.length,
+                      separatorBuilder: (context, index) =>
+                          const Divider(height: 1, indent: 10, endIndent: 10),
+                      itemBuilder: (context, index) {
+                        final item = cart.items[index];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${item.drink.isHotDrink == 'H' ? '[HOT]' : '[ICE]'} ${item.drink.name}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${NumberFormat('#,###').format(int.tryParse(item.drink.price) ?? 0)}원',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                'x${item.quantity}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(width: 15),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.cancel,
+                                  color: Colors.redAccent,
+                                  size: 20,
+                                ),
+                                onPressed: () =>
+                                    cartNotifier.removeFromCart(item),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
             ),
           ),
 
           // 결제 정보 영역
           Padding(
-            padding: const EdgeInsets.all(15.0),
+            padding: const EdgeInsets.symmetric(horizontal: 15),
             child: Column(
               children: [
-                const Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
+                    const Text(
                       '결제 금액',
                       style: TextStyle(fontSize: 18, color: Colors.black54),
                     ),
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          '0',
-                          style: TextStyle(
+                          NumberFormat('#,###').format(cart.totalPrice),
+                          style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
+                            color: Color(0xFFBE123C), // 강조 색상
                           ),
                         ),
-                        SizedBox(width: 4),
-                        Text(
+                        const SizedBox(width: 4),
+                        const Text(
                           '원',
                           style: TextStyle(
                             fontSize: 18,
@@ -101,25 +170,37 @@ class WMenuSidebar extends StatelessWidget {
                 ),
                 const SizedBox(height: 15),
 
-    
-
                 // 주문 하기/안내 메인 버튼
                 SizedBox(
                   width: double.infinity,
-                  height: 100,
+                  height: 120,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: cart.items.isEmpty
+                        ? null
+                        : () {
+                            // 주문 완료 처리 (예시: 모든 항목 비우기)
+                            cartNotifier.clearCart();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  '주문이 완료되었습니다.',
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            );
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFBE123C), // 사진의 레드 색상
+                      disabledBackgroundColor: Colors.grey.shade400,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                       elevation: 4,
                     ),
-                    child: const Text(
-                      '음료 선택 후\n눌러 주세요',
+                    child: Text(
+                      cart.items.isEmpty ? '음료 선택 후\n눌러 주세요' : '주문 하기',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
