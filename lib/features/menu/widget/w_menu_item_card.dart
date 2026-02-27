@@ -36,7 +36,7 @@ class WMenuItemCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // 아이콘/이미지 영역 (상단)
                     Expanded(

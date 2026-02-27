@@ -88,7 +88,7 @@ class WMenuLockOverlay extends StatelessWidget {
                           ),
                           SizedBox(width: 12),
                           Text(
-                            '잠시만 기다려 주시면 곧 열립니다',
+                            '잠시만 기다려 주세요',
                             style: TextStyle(
                               fontSize: 15,
                               color: Color(0xFF64748B),
