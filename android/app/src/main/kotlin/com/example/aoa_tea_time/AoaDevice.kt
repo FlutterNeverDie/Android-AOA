@@ -44,7 +44,7 @@ class AoaDevice(private val usbManager: UsbManager, private val logCallback: (St
                             val len = inputStream?.read(buf) ?: -1
                             if (len > 0) {
                                 val msg = String(buf, 0, len, StandardCharsets.UTF_8)
-                                logCallback("수신됨: $msg")
+                                logCallback(msg)
                             }
                         }
                     } catch (e: Exception) {

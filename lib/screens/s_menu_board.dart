@@ -74,7 +74,7 @@ class MenuBoardScreen extends ConsumerWidget {
     WidgetRef ref,
     List<DrinkModel> menuList,
   ) {
-    return GridView.builder( 
+    return GridView.builder(
       padding: EdgeInsets.zero,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 5, // 사진처럼 6열 배치
@@ -89,7 +89,7 @@ class MenuBoardScreen extends ConsumerWidget {
           item: item,
           onTap: () {
             ref.read(cartProvider.notifier).addToCart(item);
-            ref.read(aoaProvider.notifier).sendOrderStatus('${item.name} 선택됨');
+            ref.read(aoaProvider.notifier).sendSelectItem(item.name);
           },
         );
       },

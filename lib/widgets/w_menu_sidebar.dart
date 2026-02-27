@@ -199,7 +199,7 @@ class WMenuSidebar extends ConsumerWidget {
                             // 2. AOA 디바이스로 전송
                             ref
                                 .read(aoaProvider.notifier)
-                                .sendOrderStatus(orderMsg);
+                                .sendOrderPay(orderMsg);
 
                             // 3. UI 처리 및 장바구니 비우기
                             cartNotifier.clearCart();

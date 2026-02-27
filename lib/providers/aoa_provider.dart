@@ -54,7 +54,7 @@ class AoaNotifier extends StateNotifier<AoaState> {
       if (msg.contains('보냄:') || msg.contains('→ Sent:')) {
         type = LogType.sent;
       } else if (msg.contains('수신됨:') || msg.contains('Received:')) {
-        type = LogType.received;
+        // 원본 수신 로그는 남기되, UI 로그 추가는 _parseIncomingMessage에서 제어함
         _parseIncomingMessage(msg);
       } else if (msg.contains('오류') ||
           msg.contains('실패') ||
@@ -74,15 +74,16 @@ class AoaNotifier extends StateNotifier<AoaState> {
   }
 
   void _parseIncomingMessage(String rawMsg) {
-    // 수신됨: {내용} 형식에서 내용만 추출
+    // 1. 순수 내용 추출 (네이티브 접두어 제거)
     final content = rawMsg
         .replaceFirst('수신됨:', '')
         .replaceFirst('Received:', '')
         .trim();
 
+    // 2. 파일 전송 마커 처리 (시스템/파일 플래그)
     if (content == 'FILE_SYNC_START') {
       state = state.copyWith(fileBuffer: '', isReceivingFile: true);
-      addLog('[시스템] 파일 데이터 수신 시작...', type: LogType.system);
+      addLog('[파일] 메뉴 데이터 수신 시작...', type: LogType.system);
       return;
     }
 
@@ -98,19 +99,28 @@ class AoaNotifier extends StateNotifier<AoaState> {
           ],
           isReceivingFile: false,
         );
-        addLog('[시스템] 파일 수신 완료! 수신함에서 확인하세요.', type: LogType.system);
+        addLog('[파일] 메뉴 동기화 데이터 수신 완료', type: LogType.system);
       }
       return;
     }
 
+    // 3. 파일 데이터 수신 중 처리 (중간 청크들은 로그를 남기지 않음)
     if (state.isReceivingFile) {
-      // 파일 수신 중이라면 버퍼에 추가만 함
       state = state.copyWith(fileBuffer: state.fileBuffer + content);
       return;
     }
 
-    // 기존 단일 메시지 처리 (호환성 유지)
-    if (content.startsWith('FILE_SYNC:')) {
+    // 4. 타입별 메시지 처리
+    if (content.startsWith('SELECT_ITEM:')) {
+      final itemName = content.substring('SELECT_ITEM:'.length);
+      addLog('[주문] $itemName', type: LogType.system);
+    } else if (content.startsWith('ORDER_PAY:')) {
+      final list = content.substring('ORDER_PAY:'.length);
+      addLog('[결제] $list', type: LogType.system);
+    } else if (content.startsWith('ORDER_STATUS:')) {
+      final status = content.substring('ORDER_STATUS:'.length);
+      addLog('[상태] $status', type: LogType.system);
+    } else if (content.startsWith('FILE_SYNC:')) {
       final jsonContent = content.substring('FILE_SYNC:'.length);
       state = state.copyWith(
         pendingFiles: [
@@ -118,10 +128,13 @@ class AoaNotifier extends StateNotifier<AoaState> {
           PendingMenuFile(receivedAt: DateTime.now(), content: jsonContent),
         ],
       );
-      addLog('[시스템] 단일 패킷 파일 수신됨', type: LogType.system);
-    } else if (content.startsWith('ORDER_STATUS:')) {
-      final status = content.substring('ORDER_STATUS:'.length);
-      addLog('[주문] $status', type: LogType.system);
+      addLog('[파일] 단일 패킷 메뉴 데이터 수신됨', type: LogType.system);
+    } else if (content.contains(':') && !content.startsWith('http')) {
+      // 플래그 형식이지만(콜론 포함) 위에서 처리되지 않은 경우
+      addLog('[정의되지 않은 메시지] $content', type: LogType.error);
+    } else {
+      // 일반 메시지 (채팅 등)
+      addLog(content, type: LogType.received);
     }
   }
 
@@ -202,6 +215,14 @@ class AoaNotifier extends StateNotifier<AoaState> {
 
   Future<void> sendOrderStatus(String status) async {
     await sendMessage('ORDER_STATUS:$status');
+  }
+
+  Future<void> sendSelectItem(String itemName) async {
+    await sendMessage('SELECT_ITEM:$itemName');
+  }
+
+  Future<void> sendOrderPay(String orderDetail) async {
+    await sendMessage('ORDER_PAY:$orderDetail');
   }
 }
 
