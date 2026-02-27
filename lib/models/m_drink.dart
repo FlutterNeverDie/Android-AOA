@@ -1,4 +1,3 @@
-
 class DrinkModel {
   final String id;
   final String name;
@@ -58,32 +57,32 @@ class DrinkModel {
 
   factory DrinkModel.fromJson(Map<String, dynamic> json) {
     return DrinkModel(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      price: json['price'] ?? '',
-      type: json['type'] ?? '',
-      mdIconName: json['mdIconName'] ?? '',
-      smIconName: json['smIconName'] ?? '',
-      lgIconName: json['lgIconName'] ?? '',
-      count: json['count'] ?? '',
-      grinder: json['grinder'] ?? '',
-      bypassSeq: json['bypass_seq'] ?? '',
-      coffeeQty: json['coffee_qty'] ?? '',
-      waterQty: json['water_qty'] ?? '',
-      bypassQty: json['bypass_qty'] ?? '',
-      pressure: json['pressure'] ?? '',
-      preInfuse: json['pre_infuse'] ?? '',
-      preInfuseDelay: json['pre_infuse_delay'] ?? '',
-      milkTime: json['milk_time'] ?? '',
-      milkFoamTime: json['milk_foam_time'] ?? '',
-      mix1RawAmount: json['mix1_raw_amount'] ?? '',
-      mix1WaterQuantity: json['mix1_water_quantity'] ?? '',
-      mix2RawAmount: json['mix2_raw_amount'] ?? '',
-      mix2WaterQuantity: json['mix2_water_quantity'] ?? '',
-      mix3RawAmount: json['mix3_raw_amount'] ?? '',
-      mix3WaterQuantity: json['mix3_water_quantity'] ?? '',
-      isHotDrink: json['is_hot_drink'] ?? '',
-      iceThrow: json['ice_throw'] ?? '',
+      id: (json['id'] ?? '').toString(),
+      name: (json['name'] ?? '').toString(),
+      price: (json['price'] ?? '').toString(),
+      type: (json['type'] ?? '').toString(),
+      mdIconName: (json['mdIconName'] ?? '').toString(),
+      smIconName: (json['smIconName'] ?? '').toString(),
+      lgIconName: (json['lgIconName'] ?? '').toString(),
+      count: (json['count'] ?? '').toString(),
+      grinder: (json['grinder'] ?? '').toString(),
+      bypassSeq: (json['bypass_seq'] ?? '').toString(),
+      coffeeQty: (json['coffee_qty'] ?? '').toString(),
+      waterQty: (json['water_qty'] ?? '').toString(),
+      bypassQty: (json['bypass_qty'] ?? '').toString(),
+      pressure: (json['pressure'] ?? '').toString(),
+      preInfuse: (json['pre_infuse'] ?? '').toString(),
+      preInfuseDelay: (json['pre_infuse_delay'] ?? '').toString(),
+      milkTime: (json['milk_time'] ?? '').toString(),
+      milkFoamTime: (json['milk_foam_time'] ?? '').toString(),
+      mix1RawAmount: (json['mix1_raw_amount'] ?? '').toString(),
+      mix1WaterQuantity: (json['mix1_water_quantity'] ?? '').toString(),
+      mix2RawAmount: (json['mix2_raw_amount'] ?? '').toString(),
+      mix2WaterQuantity: (json['mix2_water_quantity'] ?? '').toString(),
+      mix3RawAmount: (json['mix3_raw_amount'] ?? '').toString(),
+      mix3WaterQuantity: (json['mix3_water_quantity'] ?? '').toString(),
+      isHotDrink: (json['is_hot_drink'] ?? '').toString(),
+      iceThrow: (json['ice_throw'] ?? '').toString(),
     );
   }
 

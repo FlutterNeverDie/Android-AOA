@@ -131,12 +131,12 @@ class MenuBoardScreen extends ConsumerWidget {
     List<DrinkModel> menuList,
   ) {
     return GridView.builder(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        childAspectRatio: 0.8,
-        crossAxisSpacing: 20,
-        mainAxisSpacing: 20,
+        crossAxisCount: 8, // 1줄에 8개 배치
+        childAspectRatio: 0.65, // 세로로 조금 더 길게
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 16,
       ),
       itemCount: menuList.length,
       itemBuilder: (context, index) {
@@ -150,57 +150,63 @@ class MenuBoardScreen extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
+        border: Border.all(color: const Color(0xFFF1F5F9)),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         child: Stack(
           children: [
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // 상단 아이콘/이미지 영역
                 Expanded(
-                  flex: 3,
+                  flex: 5,
                   child: Container(
+                    padding: const EdgeInsets.all(8),
                     color: const Color(0xFFF8FAFC),
                     child: Center(
                       child: Icon(
                         _getIconData(item.type),
-                        size: 64,
-                        color: const Color(0xFF6366F1).withValues(alpha: 0.5),
+                        size: 40, // 크기 축소
+                        color: const Color(0xFF6366F1).withValues(alpha: 0.6),
                       ),
                     ),
                   ),
                 ),
+                // 하단 정보 영역
                 Expanded(
-                  flex: 2,
+                  flex: 4,
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(8.0),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           item.name,
+                          textAlign: TextAlign.center,
                           style: const TextStyle(
-                            fontSize: 18,
+                            fontSize: 13, // 폰트 크기 축소
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF1E293B),
+                            height: 1.2,
                           ),
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
                         Text(
                           '${item.price}원',
                           style: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF6366F1),
                           ),
@@ -211,11 +217,34 @@ class MenuBoardScreen extends ConsumerWidget {
                 ),
               ],
             ),
+            // HOT/ICE 태그 (예시)
+            if (item.isHotDrink == 'H' || item.isHotDrink == 'I')
+              Positioned(
+                top: 8,
+                left: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: item.isHotDrink == 'H' ? Colors.red : Colors.blue,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    item.isHotDrink == 'H' ? 'HOT' : 'ICE',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
             Material(
               color: Colors.transparent,
               child: InkWell(
                 onTap: () {
-                  // 주문 신호 전송 테스트
                   ref
                       .read(aoaProvider.notifier)
                       .sendOrderStatus('${item.name} 주문됨');
@@ -236,6 +265,8 @@ class MenuBoardScreen extends ConsumerWidget {
         return Icons.coffee_maker_rounded;
       case 'CL':
         return Icons.local_cafe_rounded;
+      case 'IC':
+        return Icons.icecream_rounded;
       default:
         return Icons.local_drink_rounded;
     }

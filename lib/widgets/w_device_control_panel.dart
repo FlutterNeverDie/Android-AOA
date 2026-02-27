@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../providers/aoa_provider.dart';
+import '../models/m_aoa.dart';
 
 class WDeviceControlPanel extends StatefulWidget {
   final AoaNotifier notifier;
@@ -110,19 +111,7 @@ class _WDeviceControlPanelState extends State<WDeviceControlPanel> {
               }
             },
           ),
-          const SizedBox(height: 16),
-          _buildActionButton(
-            label: '호스트로 전송',
-            icon: Icons.send_rounded,
-            onPressed: () {
-              if (_messageController.text.isNotEmpty) {
-                widget.notifier.sendMessage(_messageController.text);
-                _messageController.clear();
-              }
-            },
-            color: const Color(0xFF6366F1),
-            isPrimary: true,
-          ),
+
         ],
       ),
     );
@@ -147,24 +136,40 @@ class _WDeviceControlPanelState extends State<WDeviceControlPanel> {
   }
 
   Future<void> _handleExportRecipes(BuildContext context) async {
-    const path = '/storage/emulated/0/Download/Recipes.json';
-    final file = File(path);
-    if (await file.exists()) {
-      final content = await file.readAsString();
-      await widget.notifier.sendMenuFile(content);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('다운로드 폴더의 Recipes.json을 전송했습니다.')),
-        );
+    try {
+      const path = '/storage/emulated/0/Download/Recipes.json';
+      final file = File(path);
+      if (await file.exists()) {
+        final content = await file.readAsString();
+        await widget.notifier.sendMenuFile(content);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('다운로드 폴더의 Recipes.json을 전송했습니다.'),
+              backgroundColor: Color(0xFF10B981),
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Recipes.json 파일을 찾을 수 없습니다. (Download 폴더 확인)'),
+              backgroundColor: Color(0xFFEF4444),
+            ),
+          );
+        }
       }
-    } else {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Recipes.json 파일을 찾을 수 없습니다. (Download 폴더 확인)'),
+          SnackBar(
+            content: Text('파일 읽기 실패: $e'),
+            backgroundColor: Color(0xFFEF4444),
           ),
         );
       }
+      widget.notifier.addLog('[오류] 파일 내보내기 실패: $e', type: LogType.error);
     }
   }
 

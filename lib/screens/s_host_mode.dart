@@ -175,7 +175,7 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
           ),
         ],
       ),
-    ); 
+    );
   }
 
   Widget _buildLeftPanel(AoaState state, AoaNotifier notifier) {
@@ -243,18 +243,6 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
               _messageController.clear();
             }
           },
-        ),
-        const SizedBox(height: 12),
-        _buildActionButton(
-          label: '메시지 전송',
-          icon: Icons.send_rounded,
-          onPressed: () {
-            if (_messageController.text.isNotEmpty) {
-              notifier.sendMessage(_messageController.text);
-              _messageController.clear();
-            }
-          },
-          color: const Color(0xFF6366F1),
         ),
         const SizedBox(height: 12),
         _buildActionButton(
