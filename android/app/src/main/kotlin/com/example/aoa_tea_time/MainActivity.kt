@@ -202,10 +202,40 @@ class MainActivity : FlutterActivity() {
                 val granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)
                 if (granted) {
                     logToFlutter("[성공] USB 권한 승인됨")
+                    
+                    // 권한 승인 후 자동으로 작업 재개
+                    handler.postDelayed({ 
+                        if (currentAppMode == "host") {
+                            val devices = usbManager?.deviceList
+                            // 1. AOA 모드 기기가 이미 있다면 통신 채널 개설 시도
+                            val aoaDevice = devices?.values?.find { 
+                                it.vendorId == 0x18D1 && (it.productId == 0x2D00 || it.productId == 0x2D01) 
+                            }
+                            
+                            if (aoaDevice != null) {
+                                logToFlutter("[자동] 통신 채널 개설을 시작합니다.")
+                                setupHost() 
+                            } else {
+                                // 2. 일반 모드 기기라면 핸드셰이크 시도
+                                val target = devices?.values?.find { it.vendorId != 0x18D1 } ?: devices?.values?.firstOrNull()
+                                target?.let {
+                                    logToFlutter("[자동] 핸드셰이크를 시작합니다.")
+                                    hostHandler?.doHandshake(it, pendingManuf, pendingModel, pendingVer)
+                                }
+                            }
+                        } else {
+                            // 디바이스 모드인 경우
+                            val accessories = usbManager?.accessoryList
+                            if (!accessories.isNullOrEmpty()) {
+                                logToFlutter("[자동] 통신 채널 연결을 시작합니다.")
+                                setupDevice()
+                            }
+                        }
+                    }, 500) // 시스템 처리를 위해 약간의 지연 후 실행
                 } else {
                     logToFlutter("[오류] USB 권한 거부됨")
                 }
-                unregisterReceiver(this)
+                try { unregisterReceiver(this) } catch (e: Exception) {}
             }
         }
     }
