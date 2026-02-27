@@ -200,12 +200,29 @@ class MainActivity : FlutterActivity() {
         val devices = usbManager?.deviceList
         val accessory = devices?.values?.find { 
             it.vendorId == 0x18D1 && (it.productId == 0x2D00 || it.productId == 0x2D01) 
-        } ?: return false
+        } ?: run {
+            logToFlutter("[오류] 통신 가능한 AOA 장치를 찾을 수 없습니다.")
+            return false
+        }
 
-        val conn = usbManager?.openDevice(accessory) ?: return false
+        val conn = usbManager?.openDevice(accessory) ?: run {
+            logToFlutter("[오류] AOA 장치 연결 실패 (권한 요망)")
+            return false
+        }
         hostConnection = conn
+
+        // AOA 표준 사양: SET_CONFIGURATION(0x09) 요청을 통해 구성을 1로 설정
+        logToFlutter("[시스템] 기기 구성(Configuration) 활성화 중...")
+        val setConfigResult = conn.controlTransfer(0x00, 0x09, 1, 0, null, 0, 2000)
+        logToFlutter("[시스템] 구성 활성화 결과: $setConfigResult")
+
+        // 첫 번째 인터페이스 점유 (PID 0x2D01의 경우 표준 통신용)
         val iface = accessory.getInterface(0)
-        conn.claimInterface(iface, true)
+        val claimed = conn.claimInterface(iface, true)
+        if (!claimed) {
+            logToFlutter("[오류] 인터페이스 점유 실패")
+            return false
+        }
 
         for (i in 0 until iface.endpointCount) {
             val ep = iface.getEndpoint(i)
@@ -215,11 +232,20 @@ class MainActivity : FlutterActivity() {
             }
         }
 
+        if (endpointIn == null || endpointOut == null) {
+            logToFlutter("[오류] 엔드포인트를 찾을 수 없습니다.")
+            return false
+        }
+
         Thread {
             val buf = ByteArray(1024)
-            while (hostConnection != null) {
-                val len = hostConnection?.bulkTransfer(endpointIn, buf, buf.size, 0) ?: -1
-                if (len > 0) logToFlutter("수신됨: ${String(buf, 0, len)}")
+            try {
+                while (hostConnection != null) {
+                    val len = hostConnection?.bulkTransfer(endpointIn, buf, buf.size, 500) ?: -1
+                    if (len > 0) logToFlutter("수신됨: ${String(buf, 0, len, StandardCharsets.UTF_8)}")
+                }
+            } catch (e: Exception) {
+                logToFlutter("[안내] 호스트 수신 중단: ${e.message}")
             }
         }.start()
 
