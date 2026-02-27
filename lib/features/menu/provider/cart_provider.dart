@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/m_drink.dart';
-import 'aoa_provider.dart';
+import '../model/m_drink.dart';
+import '../../aoa/provider/aoa_provider.dart';
 
 class CartItem {
   final DrinkModel drink;

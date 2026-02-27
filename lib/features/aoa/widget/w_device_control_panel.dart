@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/aoa_provider.dart';
-import '../screens/s_menu_board.dart';
-import 'w_action_button.dart';
+import '../provider/aoa_provider.dart';
+import '../../menu/screen/s_menu_board.dart';
+import '../../../share/widget/w_action_button.dart';
 
 class WDeviceControlPanel extends ConsumerStatefulWidget {
   final AoaNotifier notifier;

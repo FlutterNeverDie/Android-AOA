@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/m_aoa.dart';
+import '../model/m_aoa.dart';
 
 class WConsoleLog extends StatefulWidget {
   final List<MAoaLog> logs;

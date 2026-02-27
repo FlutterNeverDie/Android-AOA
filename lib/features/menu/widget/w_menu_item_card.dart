@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../models/m_drink.dart';
+import '../model/m_drink.dart';
 
 class WMenuItemCard extends StatelessWidget {
   final DrinkModel item;

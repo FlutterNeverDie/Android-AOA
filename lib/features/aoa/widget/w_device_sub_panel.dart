@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:file_picker/file_picker.dart';
-import '../providers/aoa_provider.dart';
-import '../providers/menu_provider.dart';
-import 'w_action_button.dart';
-import 'd_menu_import_confirm.dart';
+import '../provider/aoa_provider.dart';
+import '../../menu/provider/menu_provider.dart';
+import '../../../share/widget/w_action_button.dart';
+import '../../menu/widget/d_menu_import_confirm.dart';
 
 class WDeviceSubPanel extends ConsumerStatefulWidget {
   final AoaNotifier notifier;

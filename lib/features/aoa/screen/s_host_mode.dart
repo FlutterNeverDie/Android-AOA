@@ -1,12 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/aoa_provider.dart';
-import '../models/m_aoa_state.dart';
-import '../widgets/w_glass_panel.dart';
-import '../widgets/w_console_log.dart';
-import '../widgets/w_host_sub_panel.dart';
-import 's_menu_board.dart';
+import '../provider/aoa_provider.dart';
+import '../model/m_aoa_state.dart';
+import '../../../share/widget/w_glass_panel.dart';
+import '../widget/w_console_log.dart';
+import '../widget/w_host_sub_panel.dart';
+import '../../menu/screen/s_menu_board.dart';
 
 class HostModeScreen extends ConsumerStatefulWidget {
   const HostModeScreen({super.key});

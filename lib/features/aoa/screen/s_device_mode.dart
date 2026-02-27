@@ -1,11 +1,11 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/aoa_provider.dart';
-import '../widgets/w_glass_panel.dart';
-import '../widgets/w_console_log.dart';
-import '../widgets/w_device_control_panel.dart';
-import '../widgets/w_device_sub_panel.dart';
+import '../provider/aoa_provider.dart';
+import '../../../share/widget/w_glass_panel.dart';
+import '../widget/w_console_log.dart';
+import '../widget/w_device_control_panel.dart';
+import '../widget/w_device_sub_panel.dart';
 
 class DeviceModeScreen extends ConsumerStatefulWidget {
   const DeviceModeScreen({super.key});

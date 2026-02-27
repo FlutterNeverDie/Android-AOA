@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/w_glass_panel.dart';
+import '../../../share/widget/w_glass_panel.dart';
 
 class DAoaInfo extends StatefulWidget {
   final String initialManuf;

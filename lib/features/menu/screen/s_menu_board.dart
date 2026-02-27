@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/menu_provider.dart';
-import '../providers/aoa_provider.dart';
-import '../widgets/w_menu_app_bar.dart';
-import '../widgets/w_menu_sidebar.dart';
-import '../widgets/w_menu_grid.dart';
-import '../widgets/w_menu_empty_state.dart';
-import '../widgets/w_menu_lock_overlay.dart';
+import '../provider/menu_provider.dart';
+import '../../aoa/provider/aoa_provider.dart';
+import '../widget/w_menu_app_bar.dart';
+import '../widget/w_menu_sidebar.dart';
+import '../widget/w_menu_grid.dart';
+import '../widget/w_menu_empty_state.dart';
+import '../widget/w_menu_lock_overlay.dart';
 
 /// 메인 메뉴판 화면
 /// 상단바, 메뉴 그리드, 우측 장바구니로 구성되며 상대방 기기의 잠금 상태를 감시합니다.

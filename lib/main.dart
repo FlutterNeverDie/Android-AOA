@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'common/theme.dart';
-import 'screens/s_mode_selection.dart';
+import 'share/theme/theme.dart';
+import 'features/aoa/screen/s_mode_selection.dart';
 
 void main() {
   runApp(const ProviderScope(child: AoaApp()));

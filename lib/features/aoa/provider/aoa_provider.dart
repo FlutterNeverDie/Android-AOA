@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import '../models/m_aoa.dart';
-import '../models/m_aoa_state.dart';
-import '../models/m_pending_file.dart';
-import '../repositories/repo_aoa.dart';
+import '../model/m_aoa.dart';
+import '../model/m_aoa_state.dart';
+import '../model/m_pending_file.dart';
+import '../repository/repo_aoa.dart';
 
 /// AOA 통신의 비즈니스 로직을 담당하는 Notifier 클래스
 /// 메시지 파싱, 파일 청크 전송, 상태 업데이트 등을 관리합니다.

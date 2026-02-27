@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../providers/aoa_provider.dart';
-import '../models/m_aoa_state.dart';
-import '../models/m_pending_file.dart';
-import '../providers/menu_provider.dart';
-import '../dialogs/d_aoa_info.dart';
+import '../provider/aoa_provider.dart';
+import '../model/m_aoa_state.dart';
+import '../model/m_pending_file.dart';
+import '../../menu/provider/menu_provider.dart';
+import 'd_aoa_info.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class WHostSubPanel extends ConsumerWidget {

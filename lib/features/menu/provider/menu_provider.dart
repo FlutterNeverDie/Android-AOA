@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/m_drink.dart';
-import '../repositories/repo_menu.dart';
+import '../model/m_drink.dart';
+import '../repository/repo_menu.dart';
 
 /// MenuRepository 주입을 위한 프로바이더
 final menuRepositoryProvider = Provider((ref) => MenuRepository());

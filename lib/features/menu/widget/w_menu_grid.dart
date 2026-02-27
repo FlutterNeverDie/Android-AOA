@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/m_drink.dart';
-import '../providers/cart_provider.dart';
-import '../providers/aoa_provider.dart';
+import '../model/m_drink.dart';
+import '../provider/cart_provider.dart';
+import '../../aoa/provider/aoa_provider.dart';
 import 'w_menu_item_card.dart';
 
 /// 실제 상품들이 나열되는 그리드 위젯
