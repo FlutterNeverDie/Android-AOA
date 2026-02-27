@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/aoa_provider.dart';
@@ -24,34 +25,48 @@ class _DeviceModeScreenState extends ConsumerState<DeviceModeScreen> {
     final notifier = ref.read(aoaProvider.notifier);
 
     return Scaffold(
-      resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            children: [
-              _buildHeader(context),
-              const SizedBox(height: 24),
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.75,
-                child: Row(
-                  children: [
-                    WGlassPanel(width: 320, child: _buildLeftPanel(notifier)),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: WGlassPanel(
-                        child: WConsoleLog(
-                          logs: state.logs,
-                          onClear: notifier.clearLogs,
+      resizeToAvoidBottomInset: false,
+      body: Stack(
+        children: [
+          _buildBackground(),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                children: [
+                  _buildHeader(context),
+                  const SizedBox(height: 24),
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        WGlassPanel(
+                          width: 320,
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(20),
+                            child: _buildLeftPanel(notifier),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: WGlassPanel(
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: WConsoleLog(
+                                logs: state.logs,
+                                onClear: notifier.clearLogs,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -200,7 +215,7 @@ class _DeviceModeScreenState extends ConsumerState<DeviceModeScreen> {
         ElevatedButton.icon(
           icon: const Icon(Icons.ios_share_rounded),
           label: const Text('Recipes.json 내보내기'),
-          onPressed: () async {
+          onPressed: () async { 
             const path = '/storage/emulated/0/Download/Recipes.json';
             final file = File(path);
             if (await file.exists()) {
@@ -272,6 +287,29 @@ class _DeviceModeScreenState extends ConsumerState<DeviceModeScreen> {
             minimumSize: const Size(double.infinity, 56),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBackground() {
+    return Stack(
+      children: [
+        Positioned(
+          top: -150,
+          left: -150,
+          child: Container(
+            width: 400,
+            height: 400,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF6366F1).withValues(alpha: 0.05),
+            ),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
+              child: Container(),
             ),
           ),
         ),
