@@ -1,8 +1,6 @@
 import 'dart:io';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:file_picker/file_picker.dart';
 import '../providers/aoa_provider.dart';
@@ -119,34 +117,33 @@ class _WDeviceSubPanelState extends ConsumerState<WDeviceSubPanel> {
     }
   }
 
-  /// 현재 메모리에 있는 메뉴 데이터를 로컬 파일로 저장
+  /// 지정된 경로(/Download/Recipes.json)의 파일을 읽어 호스트 기기로 전송
   Future<void> _handleExportToLocal(BuildContext context) async {
     try {
       if (Platform.isAndroid) {
         if (!await _requestPermissions()) return;
       }
 
-      final menuData = ref.read(menuProvider);
-      final jsonString = jsonEncode(menuData.map((e) => e.toJson()).toList());
+      const path = '/storage/emulated/0/Download/Recipes.json';
+      final file = File(path);
 
-      String? directoryPath;
-      if (Platform.isAndroid) {
-        directoryPath = '/storage/emulated/0/Download';
+      if (await file.exists()) {
+        final content = await file.readAsString();
+        if (content.trim().isEmpty) {
+          throw Exception('파일 내용이 비어있습니다.');
+        }
+
+        await widget.notifier.sendMenuFile(content);
+        if (mounted) { 
+          _showSnackBar(context, '지정 경로의 Recipes.json을 호스트로 전송했습니다.');
+        }
       } else {
-        final directory = await getDownloadsDirectory();
-        directoryPath = directory?.path;
-      }
-
-      if (directoryPath == null) throw Exception('저장 경로를 찾을 수 없습니다.');
-
-      final file = File('$directoryPath/Recipes_Exported.json');
-      await file.writeAsString(jsonString);
-
-      if (mounted) {
-        _showSnackBar(context, '데이터가 내보내졌습니다: ${file.path}');
+        if (mounted) {
+          _showSnackBar(context, '파일을 찾을 수 없습니다: $path', isError: true);
+        }
       }
     } catch (e) {
-      _showSnackBar(context, '내보내기 실패: $e', isError: true);
+      _showSnackBar(context, '파일 전송 실패: $e', isError: true);
     }
   }
 
