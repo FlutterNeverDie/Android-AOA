@@ -5,6 +5,7 @@ import '../providers/aoa_provider.dart';
 import '../widgets/w_glass_panel.dart';
 import '../widgets/w_console_log.dart';
 import '../widgets/w_device_control_panel.dart';
+import '../widgets/w_device_sub_panel.dart';
 
 class DeviceModeScreen extends ConsumerStatefulWidget {
   const DeviceModeScreen({super.key});
@@ -18,8 +19,8 @@ class DeviceModeScreen extends ConsumerStatefulWidget {
 class _DeviceModeScreenState extends ConsumerState<DeviceModeScreen> {
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(aoaProvider);
-    final notifier = ref.read(aoaProvider.notifier);
+    final aoaState = ref.watch(aoaProvider);
+    final aoaNotifier = ref.read(aoaProvider.notifier);
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -37,21 +38,31 @@ class _DeviceModeScreenState extends ConsumerState<DeviceModeScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        // 좌측: 디바이스 제어 패널 (통신 설정, 메뉴판 이동)
                         WGlassPanel(
                           width: 320,
-                          child: WDeviceControlPanel(notifier: notifier),
+                          child: WDeviceControlPanel(notifier: aoaNotifier),
                         ),
                         const SizedBox(width: 20),
+
+                        // 중앙: 콘솔 로그
                         Expanded(
                           child: WGlassPanel(
                             child: Padding(
                               padding: const EdgeInsets.all(20),
                               child: WConsoleLog(
-                                logs: state.logs,
-                                onClear: notifier.clearLogs,
+                                logs: aoaState.logs,
+                                onClear: aoaNotifier.clearLogs,
                               ),
                             ),
                           ),
+                        ),
+                        const SizedBox(width: 20),
+
+                        // 우측: 서브 패널 (로컬 파일 관리)
+                        WGlassPanel(
+                          width: 320,
+                          child: WDeviceSubPanel(notifier: aoaNotifier),
                         ),
                       ],
                     ),
@@ -108,7 +119,7 @@ class _DeviceModeScreenState extends ConsumerState<DeviceModeScreen> {
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withOpacity(0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -151,7 +162,7 @@ class _DeviceModeScreenState extends ConsumerState<DeviceModeScreen> {
             height: 400,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF6366F1).withValues(alpha: 0.05),
+              color: const Color(0xFF6366F1).withOpacity(0.05),
             ),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
