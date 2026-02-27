@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../providers/aoa_provider.dart';
 import '../models/m_aoa.dart';
 
@@ -111,7 +112,6 @@ class _WDeviceControlPanelState extends State<WDeviceControlPanel> {
               }
             },
           ),
-
         ],
       ),
     );
@@ -137,15 +137,36 @@ class _WDeviceControlPanelState extends State<WDeviceControlPanel> {
 
   Future<void> _handleExportRecipes(BuildContext context) async {
     try {
+      // 1. 권한 확인 및 요청
+      if (Platform.isAndroid) {
+        // 일반 저장소 권한 확인
+        var status = await Permission.storage.status;
+        if (!status.isGranted) {
+          status = await Permission.storage.request();
+        }
+
+        // Android 11+(SDK 30) 이상을 위한 전체 파일 관리 권한 확인 (필요한 경우)
+        if (await Permission.manageExternalStorage.isRestricted ||
+            !await Permission.manageExternalStorage.isGranted) {
+          await Permission.manageExternalStorage.request();
+        }
+      }
+
       const path = '/storage/emulated/0/Download/Recipes.json';
       final file = File(path);
+
       if (await file.exists()) {
         final content = await file.readAsString();
+        // 데이터가 비어있는지 확인
+        if (content.trim().isEmpty) {
+          throw Exception('파일 내용이 비어있습니다.');
+        }
+
         await widget.notifier.sendMenuFile(content);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('다운로드 폴더의 Recipes.json을 전송했습니다.'),
+              content: Text('Download 폴더의 Recipes.json을 전송했습니다.'),
               backgroundColor: Color(0xFF10B981),
             ),
           );
@@ -164,8 +185,8 @@ class _WDeviceControlPanelState extends State<WDeviceControlPanel> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('파일 읽기 실패: $e'),
-            backgroundColor: Color(0xFFEF4444),
+            content: Text('파일 접근 오류: $e'),
+            backgroundColor: const Color(0xFFEF4444),
           ),
         );
       }
