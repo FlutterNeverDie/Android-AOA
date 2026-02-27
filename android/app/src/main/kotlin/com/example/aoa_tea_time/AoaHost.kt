@@ -1,14 +1,11 @@
 package com.example.aoa_tea_time
 
-import android.hardware.usb.UsbConstants
-import android.hardware.usb.UsbDevice
-import android.hardware.usb.UsbDeviceConnection
-import android.hardware.usb.UsbEndpoint
-import android.hardware.usb.UsbManager
+import android.hardware.usb.*
 import java.nio.charset.StandardCharsets
 
 /**
  * AOA 호스트 모드 로직을 담당하는 클래스
+ * 재부팅 및 인터페이스 점유 실패 문제를 방지하기 위해 최적화됨.
  */
 class AoaHost(
     private val usbManager: UsbManager,
@@ -30,7 +27,7 @@ class AoaHost(
             return
         }
         
-        logCallback("[명령] AOA 핸드셰이크 시퀀스 시작 (제조사: $manuf, 모델: $model)")
+        logCallback("[명령] AOA 핸드셰이크 시퀀스 시작")
         
         val proto = ByteArray(2)
         conn.controlTransfer(0xC0, 51, 0, 0, proto, 2, 1000)
@@ -43,7 +40,7 @@ class AoaHost(
         
         sendStr(0, manuf)
         sendStr(1, model)
-        sendStr(2, "AOA 티타임") // Description
+        sendStr(2, "AOA 티타임 호스트") 
         sendStr(3, ver)
         
         logCallback("[명령] START 신호 전송")
@@ -64,33 +61,54 @@ class AoaHost(
         
         connection = conn
         
-        // AOA 표준: SET_CONFIGURATION (0x09) 요청
-        logCallback("[시스템] 기기 구성(Configuration) 활성화 중...")
-        conn.controlTransfer(0x00, 0x09, 1, 0, null, 0, 2000)
+        // [수정] 기기 재부팅 방지를 위해 SET_CONFIGURATION(0x09) 생략
+        // 안드로이드 호스트 스택이 이미 기본 구성을 완료했을 확률이 높음
 
-        // 첫 번째 인터페이스 점유
-        val iface = device.getInterface(0)
-        if (!conn.claimInterface(iface, true)) {
-            logCallback("[오류] 인터페이스 점유 실패")
-            return false
-        }
+        // 1. 유효한 인터페이스 자동 탐색 (Bulk IN/OUT이 있는 인터페이스 찾기)
+        var targetIface: UsbInterface? = null
+        var foundIn: UsbEndpoint? = null
+        var foundOut: UsbEndpoint? = null
 
-        // 벌크 엔드포인트 찾기
-        for (i in 0 until iface.endpointCount) {
-            val ep = iface.getEndpoint(i)
-            if (ep.type == UsbConstants.USB_ENDPOINT_XFER_BULK) {
-                if (ep.direction == UsbConstants.USB_DIR_IN) epIn = ep
-                else epOut = ep
+        logCallback("[시스템] 통신 가능한 인터페이스 찾는 중...")
+        for (i in 0 until device.interfaceCount) {
+            val iface = device.getInterface(i)
+            var tin: UsbEndpoint? = null
+            var tout: UsbEndpoint? = null
+
+            for (j in 0 until iface.endpointCount) {
+                val ep = iface.getEndpoint(j)
+                if (ep.type == UsbConstants.USB_ENDPOINT_XFER_BULK) {
+                    if (ep.direction == UsbConstants.USB_DIR_IN) tin = ep
+                    else tout = ep
+                }
+            }
+
+            if (tin != null && tout != null) {
+                targetIface = iface
+                foundIn = tin
+                foundOut = tout
+                break
             }
         }
 
-        if (epIn == null || epOut == null) {
-            logCallback("[오류] 엔드포인트를 찾을 수 없습니다.")
+        if (targetIface == null) {
+            logCallback("[오류] 유효한 AOA 인터페이스를 찾을 수 없습니다.")
+            conn.close()
             return false
         }
 
+        // 2. 인터페이스 점유
+        if (!conn.claimInterface(targetIface, true)) {
+            logCallback("[오류] 인터페이스 점유 실패 (ID: ${targetIface.id})")
+            conn.close()
+            return false
+        }
+
+        epIn = foundIn
+        epOut = foundOut
+
         startListening()
-        logCallback("[성공] 호스트 통신 채널 개설 완료")
+        logCallback("[성공] 호스트 통신 준비 완료")
         return true
     }
 
@@ -100,7 +118,7 @@ class AoaHost(
             val buf = ByteArray(16384)
             try {
                 while (isRunning && connection != null) {
-                    val len = connection?.bulkTransfer(epIn, buf, buf.size, 500) ?: -1
+                    val len = connection?.bulkTransfer(epIn, buf, buf.size, 1000) ?: -1
                     if (len > 0) {
                         val msg = String(buf, 0, len, StandardCharsets.UTF_8)
                         logCallback("수신됨: $msg")
@@ -113,8 +131,9 @@ class AoaHost(
     }
 
     fun sendMessage(msg: String): Boolean {
+        if (connection == null || epOut == null) return false
         val b = msg.toByteArray(StandardCharsets.UTF_8)
-        val result = connection?.bulkTransfer(epOut, b, b.size, 1000) ?: -1
+        val result = connection?.bulkTransfer(epOut, b, b.size, 2000) ?: -1
         return result >= 0
     }
 
