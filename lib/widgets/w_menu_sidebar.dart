@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../providers/cart_provider.dart';
+import '../providers/aoa_provider.dart';
 
 class WMenuSidebar extends ConsumerWidget {
   const WMenuSidebar({super.key});
@@ -23,7 +24,7 @@ class WMenuSidebar extends ConsumerWidget {
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(Icons.shopping_cart, color: Colors.black54, size: 30,),
+                Icon(Icons.shopping_cart, color: Colors.black54, size: 30),
                 SizedBox(width: 10),
                 Text(
                   '장바구니',
@@ -41,7 +42,7 @@ class WMenuSidebar extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
             color: const Color(0xFF1E293B),
-            child:  Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
@@ -49,8 +50,12 @@ class WMenuSidebar extends ConsumerWidget {
                   style: TextStyle(color: Colors.white, fontSize: 13),
                 ),
                 InkWell(
-                    onTap:  () => cartNotifier.clearCart(),
-                    child: Text('삭제', style: TextStyle(color: Colors.white, fontSize: 13))),
+                  onTap: () => cartNotifier.clearCart(),
+                  child: Text(
+                    '삭제',
+                    style: TextStyle(color: Colors.white, fontSize: 13),
+                  ),
+                ),
               ],
             ),
           ),
@@ -178,7 +183,25 @@ class WMenuSidebar extends ConsumerWidget {
                     onPressed: cart.items.isEmpty
                         ? null
                         : () {
-                            // 주문 완료 처리 (예시: 모든 항목 비우기)
+                            // 1. 주문 내역 문자열 생성
+                            final orderDetails = cart.items
+                                .map((item) {
+                                  final type = item.drink.isHotDrink == 'H'
+                                      ? 'HOT'
+                                      : 'ICE';
+                                  return '${item.drink.name}($type) x${item.quantity}';
+                                })
+                                .join(', ');
+
+                            final orderMsg =
+                                '[$orderDetails] 총 ${NumberFormat('#,###').format(cart.totalPrice)}원';
+
+                            // 2. AOA 디바이스로 전송
+                            ref
+                                .read(aoaProvider.notifier)
+                                .sendOrderStatus(orderMsg);
+
+                            // 3. UI 처리 및 장바구니 비우기
                             cartNotifier.clearCart();
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
