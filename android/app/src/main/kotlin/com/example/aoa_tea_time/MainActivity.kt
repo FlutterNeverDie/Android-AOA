@@ -196,17 +196,28 @@ class MainActivity : FlutterActivity() {
         conn.close()
     }
 
-    private fun setupHostCommunication(): Boolean {
-        val devices = usbManager?.deviceList
-        val accessory = devices?.values?.find { 
+        val targetDevice = devices?.values?.find { 
             it.vendorId == 0x18D1 && (it.productId == 0x2D00 || it.productId == 0x2D01) 
         } ?: run {
-            logToFlutter("[오류] 통신 가능한 AOA 장치를 찾을 수 없습니다.")
+            logToFlutter("[오류] 통신 가능한 AOA 장치를 찾을 수 없습니다. (핸드셰이크 확인 요망)")
             return false
         }
 
-        val conn = usbManager?.openDevice(accessory) ?: run {
-            logToFlutter("[오류] AOA 장치 연결 실패 (권한 요망)")
+        if (!usbManager!!.hasPermission(targetDevice)) {
+            logToFlutter("[안내] AOA 모드 장치(0x${Integer.toHexString(targetDevice.productId)})에 대한 권한이 필요합니다. 팝업을 확인해주세요.")
+            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+            val pi = PendingIntent.getBroadcast(this, 0, Intent(ACTION_USB_PERMISSION), flags)
+            registerReceiver(usbReceiver, IntentFilter(ACTION_USB_PERMISSION))
+            usbManager?.requestPermission(targetDevice, pi)
+            return false
+        }
+
+        val conn = usbManager?.openDevice(targetDevice) ?: run {
+            logToFlutter("[오류] AOA 장치를 열 수 없습니다.")
             return false
         }
         hostConnection = conn
