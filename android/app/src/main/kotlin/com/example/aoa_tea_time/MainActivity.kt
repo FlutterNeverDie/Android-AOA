@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.hardware.usb.*
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelFileDescriptor
@@ -38,6 +39,11 @@ class MainActivity : FlutterActivity() {
     private var outputStream: FileOutputStream? = null
 
     private var currentAppMode = "selection"
+    
+    // 권한 요청 시 전달할 정보 임시 저장
+    private var pendingManuf = ""
+    private var pendingModel = ""
+    private var pendingVer = ""
 
     private val handler = Handler(Looper.getMainLooper())
 
@@ -46,7 +52,6 @@ class MainActivity : FlutterActivity() {
 
         usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
 
-        // Check if we were launched by a USB accessory
         if (intent.action == UsbManager.ACTION_USB_ACCESSORY_ATTACHED) {
             accessory = intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY)
             logToFlutter("[시스템] USB 액세서리 연결로 앱이 실행되었습니다.")
@@ -56,7 +61,7 @@ class MainActivity : FlutterActivity() {
             when (call.method) {
                 "setAppMode" -> {
                     currentAppMode = call.argument<String>("mode") ?: "selection"
-                    logToFlutter("[시스템] 앱 모드가 '${if(currentAppMode == "host") "호스트" else "디바이스"}'로 설정되었습니다.")
+                    logToFlutter("[시스템] 앱 모드: ${if(currentAppMode == "host") "호스트" else "디바이스"}")
                     result.success(true)
                 }
                 "checkSupport" -> {
@@ -64,10 +69,10 @@ class MainActivity : FlutterActivity() {
                     result.success(supported)
                 }
                 "startAccessory" -> {
-                    val manuf = call.argument<String>("manufacturer") ?: "SCS PRO"
-                    val model = call.argument<String>("model") ?: "NMP-10"
-                    val ver = call.argument<String>("version") ?: "1.0"
-                    startAoaHandshake(manuf, model, ver)
+                    pendingManuf = call.argument<String>("manufacturer") ?: "SCS PRO"
+                    pendingModel = call.argument<String>("model") ?: "NMP-10"
+                    pendingVer = call.argument<String>("version") ?: "1.0"
+                    startAoaHandshake(pendingManuf, pendingModel, pendingVer)
                     result.success(true)
                 }
                 "setupCommunication" -> {
@@ -87,7 +92,6 @@ class MainActivity : FlutterActivity() {
             object : EventChannel.StreamHandler {
                 override fun onListen(arguments: Any?, sink: EventChannel.EventSink?) {
                     eventSink = sink
-                    logToFlutter("[시스템] 네이티브 시스템이 준비되었습니다.")
                 }
                 override fun onCancel(arguments: Any?) { eventSink = null }
             }
@@ -98,14 +102,12 @@ class MainActivity : FlutterActivity() {
         handler.post { eventSink?.success(msg) }
     }
 
-    // --- HOST MODE LOGIC ---
     private fun scanForDevices(): Boolean {
         val devices = usbManager?.deviceList
-        logToFlutter("[스캔] 총 ${devices?.size ?: 0}개의 USB 장치 발견")
+        logToFlutter("[스캔] 장치 ${devices?.size ?: 0}개 발견됨")
         devices?.values?.forEach { device ->
-            logToFlutter("[장치] VID=0x${Integer.toHexString(device.vendorId)}, PID=0x${Integer.toHexString(device.productId)}")
+            logToFlutter("-> VID: 0x${Integer.toHexString(device.vendorId)}, PID: 0x${Integer.toHexString(device.productId)}")
             if (device.vendorId == 0x18D1 && (device.productId == 0x2D00 || device.productId == 0x2D01)) {
-                logToFlutter("[안내] 액세서리 모드의 장치를 찾았습니다.")
                 return true
             }
         }
@@ -115,7 +117,7 @@ class MainActivity : FlutterActivity() {
     private fun startAoaHandshake(manuf: String, model: String, ver: String) {
         val devices = usbManager?.deviceList
         if (devices.isNullOrEmpty()) {
-            logToFlutter("[오류] AOA를 시작할 장치를 찾을 수 없습니다.")
+            logToFlutter("[오류] 연결된 USB 장치가 없습니다.")
             return
         }
 
@@ -123,8 +125,16 @@ class MainActivity : FlutterActivity() {
         if (usbManager?.hasPermission(target) == true) {
             doHandshake(target, manuf, model, ver)
         } else {
-            logToFlutter("[시스템] USB 권한을 요청합니다...")
-            val pi = PendingIntent.getBroadcast(this, 0, Intent(ACTION_USB_PERMISSION), PendingIntent.FLAG_IMMUTABLE)
+            logToFlutter("[안내] USB 권한을 요청합니다. 팝업 확인 부탁드립니다.")
+            
+            // Android 11(30) 이상에서는 FLAG_MUTABLE이 권장되거나 필요합니다.
+            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+            
+            val pi = PendingIntent.getBroadcast(this, 0, Intent(ACTION_USB_PERMISSION), flags)
             registerReceiver(usbReceiver, IntentFilter(ACTION_USB_PERMISSION))
             usbManager?.requestPermission(target, pi)
         }
@@ -135,8 +145,8 @@ class MainActivity : FlutterActivity() {
             if (ACTION_USB_PERMISSION == intent.action) {
                 val device: UsbDevice? = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
                 if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                    logToFlutter("[시스템] USB 권한이 승인되었습니다.")
-                    device?.let { doHandshake(it, "SCS PRO", "NMP-10", "1.0") }
+                    logToFlutter("[성공] USB 권한 승인됨")
+                    device?.let { doHandshake(it, pendingManuf, pendingModel, pendingVer) }
                 } else {
                     logToFlutter("[오류] USB 권한이 거부되었습니다.")
                 }
@@ -146,8 +156,11 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun doHandshake(device: UsbDevice, manuf: String, model: String, ver: String) {
-        val conn = usbManager?.openDevice(device) ?: return
-        logToFlutter("[핸드셰이크] ${device.deviceName} 장치와 연결 시도 중...")
+        val conn = usbManager?.openDevice(device) ?: run {
+            logToFlutter("[오류] 장치를 열 수 없습니다.")
+            return
+        }
+        logToFlutter("[명령] AOA 핸드셰이크 시퀀스 시작...")
         
         val proto = ByteArray(2)
         conn.controlTransfer(0xC0, 51, 0, 0, proto, 2, 1000)
@@ -159,10 +172,10 @@ class MainActivity : FlutterActivity() {
         
         sendStr(0, manuf)
         sendStr(1, model)
-        sendStr(2, "AOA 티타임 액세서리")
+        sendStr(2, "AOA 티타임 호스트")
         sendStr(3, ver)
         
-        logToFlutter("[명령] START(시작) 신호를 보냅니다.")
+        logToFlutter("[명령] START 신호 전송")
         conn.controlTransfer(0x40, 53, 0, 0, null, 0, 1000)
         conn.close()
     }
@@ -171,10 +184,7 @@ class MainActivity : FlutterActivity() {
         val devices = usbManager?.deviceList
         val accessory = devices?.values?.find { 
             it.vendorId == 0x18D1 && (it.productId == 0x2D00 || it.productId == 0x2D01) 
-        } ?: run {
-            logToFlutter("[오류] 액세서리 모드의 장치를 찾을 수 없습니다. (먼저 시작 시도를 해주세요)")
-            return false
-        }
+        } ?: return false
 
         val conn = usbManager?.openDevice(accessory) ?: return false
         hostConnection = conn
@@ -197,7 +207,7 @@ class MainActivity : FlutterActivity() {
             }
         }.start()
 
-        logToFlutter("[시스템] 호스트 통신 채널이 준비되었습니다.")
+        logToFlutter("[성공] 호스트 통신 준비 완료")
         return true
     }
 
@@ -206,7 +216,6 @@ class MainActivity : FlutterActivity() {
         return (hostConnection?.bulkTransfer(endpointOut, b, b.size, 1000) ?: -1) >= 0
     }
 
-    // --- DEVICE MODE LOGIC ---
     private fun setupDeviceCommunication(): Boolean {
         val accessories = usbManager?.accessoryList
         if (accessories.isNullOrEmpty()) {
@@ -219,7 +228,7 @@ class MainActivity : FlutterActivity() {
         
         fileDescriptor = usbManager?.openAccessory(acc)
         if (fileDescriptor == null) {
-            logToFlutter("[오류] 액세서리를 열 수 없습니다. (권한 부족 또는 연결 끊김)")
+            logToFlutter("[오류] 액세서리 열기 실패 (권한 요망)")
             return false
         }
 
@@ -235,11 +244,11 @@ class MainActivity : FlutterActivity() {
                     if (len > 0) logToFlutter("수신됨: ${String(buf, 0, len)}")
                 }
             } catch (e: Exception) {
-                logToFlutter("[오류] 수신 스트림이 닫혔습니다: ${e.message}")
+                logToFlutter("[안내] 수신 중단: ${e.message}")
             }
         }.start()
 
-        logToFlutter("[시스템] 디바이스 통신 채널이 활성화되었습니다.")
+        logToFlutter("[성공] 디바이스 통신 준비 완료")
         return true
     }
 
@@ -247,9 +256,6 @@ class MainActivity : FlutterActivity() {
         return try {
             outputStream?.write(msg.toByteArray())
             true
-        } catch (e: Exception) { 
-            logToFlutter("[오류] 메시지 전송 실패")
-            false 
-        }
+        } catch (e: Exception) { false }
     }
 }
