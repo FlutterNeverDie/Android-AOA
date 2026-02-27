@@ -38,8 +38,12 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(aoaProvider);
     final notifier = ref.read(aoaProvider.notifier);
+    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
 
     return Scaffold(
+      backgroundColor: isDark
+          ? const Color(0xFF0F172A)
+          : const Color(0xFFF8FAFC),
       resizeToAvoidBottomInset: false, // 레이아웃 안정성을 위해 false 설정
       body: Stack(
         children: [
@@ -58,21 +62,15 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
                         // 좌측 제어 패널
                         WGlassPanel(
                           width: 320,
-                          child: SingleChildScrollView(
-                            padding: const EdgeInsets.all(20),
-                            child: _buildLeftPanel(state, notifier),
-                          ),
+                          child: _buildLeftPanel(state, notifier),
                         ),
                         const SizedBox(width: 20),
                         // 중앙 콘솔
                         Expanded(
                           child: WGlassPanel(
-                            child: Padding(
-                              padding: const EdgeInsets.all(20.0),
-                              child: WConsoleLog(
-                                logs: state.logs,
-                                onClear: notifier.clearLogs,
-                              ),
+                            child: WConsoleLog(
+                              logs: state.logs,
+                              onClear: notifier.clearLogs,
                             ),
                           ),
                         ),
@@ -324,32 +322,46 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
           label: '통신 채널 개설',
           icon: Icons.lan_rounded,
           onPressed: () => notifier.setupCommunication(),
-          color: const Color(0xFFF59E0B),
+          color: const Color(0xFFF43F5E), // 일관성을 위해 색상 약간 변경 가능
         ),
         const SizedBox(height: 32),
-        const Text(
+        Text(
           '메시지 전송',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF64748B),
+            color: isDark ? Colors.white38 : const Color(0xFF64748B),
           ),
         ),
         const SizedBox(height: 12),
         TextField(
           controller: _messageController,
+          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
           decoration: InputDecoration(
             hintText: '메시지를 입력하세요...',
-            hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
+            hintStyle: TextStyle(
+              fontSize: 14,
+              color: isDark ? Colors.white24 : const Color(0xFF94A3B8),
+            ),
             filled: true,
-            fillColor: const Color(0xFFF8FAFC),
+            fillColor: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : const Color(0xFFF8FAFC),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+              borderSide: BorderSide(
+                color: isDark ? Colors.white10 : const Color(0xFFCBD5E1),
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+              borderSide: BorderSide(
+                color: isDark ? Colors.white10 : const Color(0xFFCBD5E1),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF6366F1), width: 2),
             ),
           ),
           onSubmitted: (val) {
@@ -370,6 +382,7 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
     required VoidCallback onPressed,
     required Color color,
   }) {
+    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
     return SizedBox(
       width: double.infinity,
       height: 54,
@@ -378,7 +391,7 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
         label: Text(label),
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: color.withValues(alpha: 0.1),
+          backgroundColor: color.withValues(alpha: isDark ? 0.2 : 0.1),
           foregroundColor: color,
           elevation: 0,
           alignment: Alignment.centerLeft,
@@ -393,6 +406,7 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
   }
 
   Widget _buildBackground() {
+    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
     return Stack(
       children: [
         Positioned(
@@ -403,7 +417,9 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
             height: 400,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF6366F1).withValues(alpha: 0.05),
+              color: const Color(
+                0xFF6366F1,
+              ).withValues(alpha: isDark ? 0.08 : 0.05),
             ),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),

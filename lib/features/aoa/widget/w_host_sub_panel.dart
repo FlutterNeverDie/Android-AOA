@@ -45,7 +45,7 @@ class WHostSubPanel extends ConsumerWidget {
           const SizedBox(height: 12),
           // 파일 목록 영역 - 내용만큼만 차지하도록 shrinkWrap 사용
           if (state.pendingFiles.isEmpty)
-            _buildEmptyPendingList()
+            _buildEmptyPendingList(context)
           else
             ListView.separated(
               shrinkWrap: true,
@@ -57,9 +57,12 @@ class WHostSubPanel extends ConsumerWidget {
                 return _buildPendingFileItem(context, ref, index, file);
               },
             ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 20),
-            child: Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Divider(
+              height: 1,
+              color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+            ),
           ),
           Text(
             '설정 및 도구',
@@ -71,48 +74,64 @@ class WHostSubPanel extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           _buildSubButton(
+            context,
             label: '장치 정보 설정',
             icon: Icons.settings_suggest_rounded,
             onTap: () => _showAoaInfoDialog(context),
           ),
           _buildSubButton(
+            context,
             label: '로그 지우기',
             icon: Icons.delete_outline_rounded,
             onTap: () => notifier.clearLogs(),
           ),
           _buildSubButton(
+            context,
             label: '모드 선택 페이지',
             icon: Icons.home_outlined,
             onTap: () => notifier.setMode(AppMode.selection),
           ),
           _buildSubButton(
+            context,
             label: '강제 연결 종료',
             icon: Icons.link_off_rounded,
             onTap: () => notifier.addLog('[안내] 연결 종료 요청됨'),
           ),
           const SizedBox(height: 24),
-          _buildDeviceInfoCard(),
+          _buildDeviceInfoCard(context),
         ],
       ),
     );
   }
 
-  Widget _buildEmptyPendingList() {
+  Widget _buildEmptyPendingList(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 32),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        border: Border.all(
+          color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
+        ),
       ),
-      child: const Column(
+      child: Column(
         children: [
-          Icon(Icons.folder_open_rounded, color: Color(0xFFCBD5E1), size: 32),
-          SizedBox(height: 12),
+          Icon(
+            Icons.folder_open_rounded,
+            color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
+            size: 32,
+          ),
+          const SizedBox(height: 12),
           Text(
             '수신된 데이터가 없습니다.',
-            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+            style: TextStyle(
+              color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+              fontSize: 13,
+            ),
           ),
         ],
       ),
@@ -195,16 +214,29 @@ class WHostSubPanel extends ConsumerWidget {
     int index,
     PendingMenuFile file,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('메뉴 데이터 동기화'),
-        content: const Text('선택한 데이터로 전체 메뉴판을 업데이트하시겠습니까?\n이 작업은 되돌릴 수 없습니다.'),
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        title: Text(
+          '메뉴 데이터 동기화',
+          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+        ),
+        content: Text(
+          '선택한 데이터로 전체 메뉴판을 업데이트하시겠습니까?\n이 작업은 되돌릴 수 없습니다.',
+          style: TextStyle(color: isDark ? Colors.white70 : Colors.black54),
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('취소', style: TextStyle(color: Color(0xFF64748B))),
+            child: Text(
+              '취소',
+              style: TextStyle(
+                color: isDark ? Colors.white38 : const Color(0xFF64748B),
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => _showJsonViewer(context, file.content),
@@ -257,21 +289,27 @@ class WHostSubPanel extends ConsumerWidget {
     );
   }
 
-  Widget _buildSubButton({
+  Widget _buildSubButton(
+    BuildContext context, {
     required String label,
     required IconData icon,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: SizedBox(
         width: double.infinity,
         child: TextButton.icon(
-          icon: Icon(icon, size: 20, color: const Color(0xFF64748B)),
+          icon: Icon(
+            icon,
+            size: 20,
+            color: isDark ? Colors.white38 : const Color(0xFF64748B),
+          ),
           label: Text(
             label,
-            style: const TextStyle(
-              color: Color(0xFF475569),
+            style: TextStyle(
+              color: isDark ? Colors.white70 : const Color(0xFF475569),
               fontWeight: FontWeight.w500,
               fontSize: 13,
             ),
@@ -289,48 +327,55 @@ class WHostSubPanel extends ConsumerWidget {
     );
   }
 
-  Widget _buildDeviceInfoCard() {
+  Widget _buildDeviceInfoCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        border: Border.all(
+          color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               Icon(
                 Icons.info_outline_rounded,
                 size: 14,
-                color: Color(0xFF64748B),
+                color: isDark ? Colors.white38 : const Color(0xFF64748B),
               ),
-              SizedBox(width: 6),
-              Text(
+              const SizedBox(width: 6),
+              const Text(
                 '현재 설정 정보',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF475569),
+                  color: Color(0xFF64748B),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 10),
-          _buildInfoRow('제조사', manufacturer),
-          _buildInfoRow('모델명', model),
-          _buildInfoRow('버전', version),
+          _buildInfoRow(context, '제조사', manufacturer),
+          _buildInfoRow(context, '모델명', model),
+          _buildInfoRow(context, '버전', version),
         ],
       ),
     );
   }
 
   void _showJsonViewer(BuildContext context, String json) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (context) => Dialog(
+        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Container(
           width: MediaQuery.of(context).size.width * 0.8,
@@ -342,17 +387,27 @@ class WHostSubPanel extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'JSON 원본 데이터',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close),
+                    icon: Icon(
+                      Icons.close,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
                   ),
                 ],
               ),
-              const Divider(height: 32),
+              Divider(
+                height: 32,
+                color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+              ),
               Expanded(
                 child: Container(
                   width: double.infinity,
@@ -398,7 +453,8 @@ class WHostSubPanel extends ConsumerWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(BuildContext context, String label, String value) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
@@ -406,14 +462,17 @@ class WHostSubPanel extends ConsumerWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+            style: TextStyle(
+              fontSize: 11,
+              color: isDark ? Colors.white30 : const Color(0xFF94A3B8),
+            ),
           ),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF64748B),
+              color: isDark ? Colors.white70 : const Color(0xFF64748B),
             ),
           ),
         ],

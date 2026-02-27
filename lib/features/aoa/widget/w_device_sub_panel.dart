@@ -25,7 +25,7 @@ class _WDeviceSubPanelState extends ConsumerState<WDeviceSubPanel> {
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        children: [  
           Text(
             '메뉴 데이터 관리',
             style: TextStyle(

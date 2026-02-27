@@ -13,17 +13,36 @@ class MenuImportConfirmDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return AlertDialog(
-      title: const Text(
+      title: Text(
         '로컬 데이터 확인',
-        style: TextStyle(fontWeight: FontWeight.bold),
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: isDark ? Colors.white : const Color(0xFF0F172A),
+        ),
       ),
-      content: const Text('파일 내용을 확인하고 동기화하시겠습니까?'),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      content: Text(
+        '파일 내용을 확인하고 동기화하시겠습니까?',
+        style: TextStyle(
+          color: isDark ? Colors.white70 : const Color(0xFF475569),
+        ),
+      ),
+      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: isDark ? Colors.white10 : Colors.transparent),
+      ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('취소', style: TextStyle(color: Color(0xFF64748B))),
+          child: Text(
+            '취소',
+            style: TextStyle(
+              color: isDark ? Colors.white54 : const Color(0xFF64748B),
+            ),
+          ),
         ),
         TextButton(
           onPressed: () {
@@ -49,7 +68,10 @@ class MenuImportConfirmDialog extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
           ),
-          child: const Text('불러오기'),
+          child: const Text(
+            '불러오기',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
       ],
     );

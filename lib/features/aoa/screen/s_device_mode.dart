@@ -25,8 +25,12 @@ class _DeviceModeScreenState extends ConsumerState<DeviceModeScreen> {
   Widget build(BuildContext context) {
     final aoaState = ref.watch(aoaProvider);
     final aoaNotifier = ref.read(aoaProvider.notifier);
+    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
 
     return Scaffold(
+      backgroundColor: isDark
+          ? const Color(0xFF0F172A)
+          : const Color(0xFFF8FAFC),
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
@@ -52,12 +56,9 @@ class _DeviceModeScreenState extends ConsumerState<DeviceModeScreen> {
                         // 중앙: 콘솔 로그
                         Expanded(
                           child: WGlassPanel(
-                            child: Padding(
-                              padding: const EdgeInsets.all(20),
-                              child: WConsoleLog(
-                                logs: aoaState.logs,
-                                onClear: aoaNotifier.clearLogs,
-                              ),
+                            child: WConsoleLog(
+                              logs: aoaState.logs,
+                              onClear: aoaNotifier.clearLogs,
                             ),
                           ),
                         ),
@@ -196,7 +197,7 @@ class _DeviceModeScreenState extends ConsumerState<DeviceModeScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.1 : 0.02),
+              color: Colors.black.withValues(alpha: isDark ? 0.1 : 0.02),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -233,7 +234,7 @@ class _DeviceModeScreenState extends ConsumerState<DeviceModeScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.1 : 0.03),
+            color: Colors.black.withValues(alpha: isDark ? 0.1 : 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -266,6 +267,7 @@ class _DeviceModeScreenState extends ConsumerState<DeviceModeScreen> {
   }
 
   Widget _buildBackground() {
+    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
     return Stack(
       children: [
         Positioned(
@@ -276,7 +278,9 @@ class _DeviceModeScreenState extends ConsumerState<DeviceModeScreen> {
             height: 400,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF6366F1).withOpacity(0.05),
+              color: const Color(
+                0xFF6366F1,
+              ).withValues(alpha: isDark ? 0.08 : 0.05),
             ),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),

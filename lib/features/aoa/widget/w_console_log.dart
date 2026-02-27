@@ -36,18 +36,20 @@ class _WConsoleLogState extends State<WConsoleLog> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               '시스템 콘솔',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF0F172A),
               ),
             ),
             TextButton.icon(
@@ -67,7 +69,9 @@ class _WConsoleLogState extends State<WConsoleLog> {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               // 밝은 테마에 어울리는 부드러운 다크 색상 또는 아주 연한 회색
-              color: const Color(0xFF1E293B), // 콘솔은 가독성을 위해 다크 유지
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.2)
+                  : const Color(0xFF1E293B), // 밝은 테마일 때도 콘솔은 다크 유지
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(

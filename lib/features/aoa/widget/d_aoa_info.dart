@@ -42,6 +42,7 @@ class _DAoaInfoState extends State<DAoaInfo> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -53,34 +54,39 @@ class _DAoaInfoState extends State<DAoaInfo> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 '장치 식별 정보 설정',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),
+                  color: isDark ? Colors.white : const Color(0xFF1E293B),
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'AOA 핸드셰이크 시 전송할 정보입니다.\n디바이스의 필터 설정과 일치해야 합니다.',
-                style: TextStyle(fontSize: 13, color: Colors.blueGrey),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? Colors.white60 : Colors.blueGrey,
+                ),
               ),
               const SizedBox(height: 24),
-              _buildField('제조사 (Manufacturer)', _manufController),
+              _buildField(context, '제조사 (Manufacturer)', _manufController),
               const SizedBox(height: 16),
-              _buildField('모델명 (Model)', _modelController),
+              _buildField(context, '모델명 (Model)', _modelController),
               const SizedBox(height: 16),
-              _buildField('버전 (Version)', _verController),
+              _buildField(context, '버전 (Version)', _verController),
               const SizedBox(height: 32),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text(
+                    child: Text(
                       '취소',
-                      style: TextStyle(color: Colors.grey),
+                      style: TextStyle(
+                        color: isDark ? Colors.white38 : Colors.grey,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -116,35 +122,47 @@ class _DAoaInfoState extends State<DAoaInfo> {
     );
   }
 
-  Widget _buildField(String label, TextEditingController controller) {
+  Widget _buildField(
+    BuildContext context,
+    String label,
+    TextEditingController controller,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF64748B),
+            color: isDark ? Colors.white38 : const Color(0xFF64748B),
           ),
         ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
+          style: TextStyle(color: isDark ? Colors.white : Colors.black87),
           decoration: InputDecoration(
             filled: true,
-            fillColor: const Color(0xFFF8FAFC),
+            fillColor: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : const Color(0xFFF8FAFC),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 12,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+              borderSide: BorderSide(
+                color: isDark ? Colors.white10 : const Color(0xFFCBD5E1),
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+              borderSide: BorderSide(
+                color: isDark ? Colors.white10 : const Color(0xFFCBD5E1),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

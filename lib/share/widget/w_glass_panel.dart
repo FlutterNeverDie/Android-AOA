@@ -14,16 +14,23 @@ class WGlassPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: width,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark
+            ? const Color(0xFF1E293B).withValues(alpha: 0.8)
+            : Colors.white,
         borderRadius: BorderRadius.circular(borderRadius),
-        // 더 확실하게 보이는 보더 추가
-        border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
+        // 테마에 따른 보더 색상 변경
+        border: Border.all(
+          color: isDark ? Colors.white10 : const Color(0xFFCBD5E1),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
