@@ -40,7 +40,7 @@ class MenuBoardScreen extends ConsumerWidget {
                   ),
                   child: Row(
                     children: [
-                      // 좌측 영역: 메뉴 그리드 혹은 빈 상태 표시
+                      // 좌측 영역: 메뉴 그리드 혹은 빈 상태 표시 
                       Expanded(
                         flex: 3,
                         child: Container(

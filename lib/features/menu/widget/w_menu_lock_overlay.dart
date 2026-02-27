@@ -1,57 +1,109 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
-/// 상대방 기기가 사용 중일 때 화면을 차단하는 오버레이 위젯
+/// 상대방 기기가 사용 중일 때 화면을 블러 처리하고 잠금을 표시하는 프리미엄 오버레이
 class WMenuLockOverlay extends StatelessWidget {
-  final String? lockedBy; // 누가 잠갔는지 표시 (Host/Device)
+  final String? lockedBy;
 
   const WMenuLockOverlay({super.key, this.lockedBy});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.black.withValues(alpha: 0.6), // 반투명 배경
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 30,
-                spreadRadius: 5,
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 잠금 아이콘
-              const Icon(
-                Icons.lock_person_rounded,
-                size: 80,
-                color: Color(0xFFBE123C), // 강조 레드
-              ),
-              const SizedBox(height: 24),
-              // 제목
-              Text(
-                '반대편 기기($lockedBy)에서\n사용 중입니다.',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),
-                  height: 1.3,
+    return Positioned.fill(
+      child: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12), // 강력한 블러 효과
+          child: Container(
+            color: const Color(0xFF2C1810).withOpacity(0.3), // 에스프레소 톤 오버레이
+            child: Center(
+              child: Container(
+                width: 480,
+                padding: const EdgeInsets.all(48),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.85),
+                  borderRadius: BorderRadius.circular(40),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.5),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 40,
+                      spreadRadius: -10,
+                      offset: const Offset(0, 20),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // 장식용 아이콘 컨테이너
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFBE123C).withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.lock_person_rounded,
+                        size: 72,
+                        color: Color(0xFFBE123C),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    Text(
+                      lockedBy == 'Host'
+                          ? '바리스타가\n설정을 변경 중입니다'
+                          : '다른 손님이\n주문하고 있습니다',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF1E293B),
+                        height: 1.25,
+                        letterSpacing: -1,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B).withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(0xFF64748B),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 12),
+                          Text(
+                            '잠시만 기다려 주시면 곧 열립니다',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Color(0xFF64748B),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              // 안내 문구
-              const Text(
-                '주문이 끝날 때까지 잠시만 기다려 주세요.',
-                style: TextStyle(fontSize: 16, color: Color(0xFF64748B)),
-              ),
-            ],
+            ),
           ),
         ),
       ),

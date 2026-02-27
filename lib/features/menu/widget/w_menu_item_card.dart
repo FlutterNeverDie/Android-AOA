@@ -13,119 +13,106 @@ class WMenuItemCard extends StatelessWidget {
     final bool isHot = item.isHotDrink == 'H';
 
     return Container(
-      margin: const EdgeInsets.all(8), // 카드 간 간격 (유저 요청: 상하좌우 패딩)
+      margin: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(24), // 더 둥근 모서리
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: const Color(0xFF2C1810).withOpacity(0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: const Color(0xFFE2E8F0)), // Slate 200
+        border: Border.all(color: const Color(0xFFF1F5F9), width: 1),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(24),
           child: Stack(
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // 상단: 이미지 영역
-                  Expanded(
-                    flex: 6,
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
+              Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 아이콘/이미지 영역 (상단)
+                    Expanded(
                       child: Center(
-                        child: Icon(
-                          _getIconData(item.type),
-                          size: 70,
-                          color: isHot
-                              ? Colors.orange.withValues(alpha: 0.6)
-                              : Colors.blue.withValues(alpha: 0.6),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // 하단: 텍스트 정보 영역
-                  Container(
-                    height: 80,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(12),
-                        bottomRight: Radius.circular(12),
-                      ),
-                      border: Border(
-                        top: BorderSide(color: Color(0xFFE2E8F0), width: 0.5),
-                      ),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 10,
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          item.name,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E293B), // Slate 800
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: (isHot ? Colors.orange : Colors.blue)
+                                .withOpacity(0.05),
+                            shape: BoxShape.circle,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          '₩${NumberFormat('#,###').format(int.tryParse(item.price) ?? 0)}',
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFFBE123C), // Rose 700
+                          child: Icon(
+                            _getIconData(item.type),
+                            size: 60,
+                            color: isHot
+                                ? const Color(0xFFD97706)
+                                : const Color(0xFF2563EB),
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    // 정보 영역 (하단)
+                    Text(
+                      item.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1E293B),
+                        letterSpacing: -0.5,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '₩${NumberFormat('#,###').format(int.tryParse(item.price) ?? 0)}',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFBE123C),
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
-              // HOT/ICE 태그
+              // HOT/ICE 배지
               Positioned(
-                top: 10,
-                left: 10,
+                top: 16,
+                right: 16,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
+                    horizontal: 10,
+                    vertical: 4,
                   ),
                   decoration: BoxDecoration(
                     color: isHot
-                        ? Colors.red.withValues(alpha: 0.1)
-                        : Colors.blue.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
+                        ? const Color(0xFFFEF2F2)
+                        : const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isHot
-                          ? Colors.red.withValues(alpha: 0.5)
-                          : Colors.blue.withValues(alpha: 0.5),
-                      width: 1,
+                          ? const Color(0xFFFECACA)
+                          : const Color(0xFFBFDBFE),
                     ),
                   ),
                   child: Text(
                     isHot ? 'HOT' : 'ICE',
                     style: TextStyle(
-                      color: isHot ? Colors.red.shade700 : Colors.blue.shade700,
-                      fontSize: 11,
+                      color: isHot
+                          ? const Color(0xFFB91C1C)
+                          : const Color(0xFF1D4ED8),
+                      fontSize: 12,
                       fontWeight: FontWeight.w900,
+                      letterSpacing: 1,
                     ),
                   ),
                 ),
@@ -140,11 +127,11 @@ class WMenuItemCard extends StatelessWidget {
   IconData _getIconData(String type) {
     switch (type) {
       case 'AM':
-        return Icons.local_cafe_rounded;
-      case 'CO':
         return Icons.coffee_rounded;
+      case 'CO':
+        return Icons.local_cafe_rounded;
       case 'CE':
-        return Icons.coffee_maker_rounded;
+        return Icons.wine_bar_rounded;
       default:
         return Icons.local_drink_rounded;
     }

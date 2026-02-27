@@ -7,10 +7,17 @@ class WMenuAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 60,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      height: 80, // 높이를 조금 더 여유롭게 조정
+      padding: const EdgeInsets.symmetric(horizontal: 32),
       decoration: const BoxDecoration(
-        color: Color(0xFF1E293B), // 네이비 톤
+        color: Color(0xFF2C1810), // 에스프레소 브라운
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -20,80 +27,87 @@ class WMenuAppBar extends StatelessWidget {
             children: [
               IconButton(
                 onPressed: () => Navigator.maybePop(context),
-                icon: const Icon(Icons.home_rounded, color: Colors.white70),
-                tooltip: '관리 화면으로 돌아가기',
+                icon: const Icon(
+                  Icons.close_rounded,
+                  color: Colors.white60,
+                  size: 28,
+                ),
+                tooltip: '닫기',
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 20),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _getKoreanDayName(DateTime.now()),
+                    style: const TextStyle(
+                      color: Color(0xFFD4A373),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  Text(
+                    DateFormat('HH:mm').format(DateTime.now()),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w300,
+                      fontFamily: 'JetBrains Mono',
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          // 중앙: 로고
+          const Row(
+            children: [
               Text(
-                DateFormat('HH:mm').format(DateTime.now()),
-                style: const TextStyle(
+                'TEA TIME',
+                style: TextStyle(
                   color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w200,
+                  letterSpacing: 8,
                 ),
               ),
             ],
           ),
 
-          // 중앙: 로고 및 타이틀
+          // 오른쪽: 시스템 상태 (심플하게)
           Row(
             children: [
-              const Text(
-                'TeaTime',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w300,
-                  letterSpacing: 2,
-                ),
+              _buildStatusIcon(
+                Icons.wifi_tethering_rounded,
+                Colors.greenAccent,
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.coffee,
-                  color: Color(0xFF1E293B),
-                  size: 16,
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'COFFEE',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2,
-                ),
-              ),
-            ],
-          ),
-
-          // 오른쪽: 상태 아이콘
-          Row(
-            children: [
-              const Text(
-                '102C',
-                style: TextStyle(color: Colors.white70, fontSize: 16),
-              ),
-              const SizedBox(width: 15),
-              const Icon(Icons.security, color: Colors.white70, size: 20),
-              const SizedBox(width: 10),
-              const Icon(Icons.wifi, color: Colors.white70, size: 20),
-              const SizedBox(width: 10),
-              const Icon(
-                Icons.warning_amber_rounded,
-                color: Colors.redAccent,
-                size: 20,
-              ),
+              const SizedBox(width: 20),
+              _buildStatusIcon(Icons.power_rounded, Colors.white38),
+              const SizedBox(width: 20),
+              const Icon(Icons.more_vert_rounded, color: Colors.white38),
             ],
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildStatusIcon(IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, color: color, size: 18),
+    );
+  }
+
+  String _getKoreanDayName(DateTime date) {
+    const days = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
+    return days[date.weekday - 1];
   }
 }
