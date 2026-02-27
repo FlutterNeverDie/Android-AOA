@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/aoa_provider.dart';
 import '../screens/s_menu_board.dart';
+import 'w_action_button.dart';
 
 class WDeviceControlPanel extends ConsumerStatefulWidget {
   final AoaNotifier notifier;
@@ -55,7 +56,7 @@ class _WDeviceControlPanelState extends ConsumerState<WDeviceControlPanel> {
             ),
           ),
           const SizedBox(height: 24),
-          _buildActionButton(
+          WActionButton(
             label: '메뉴판 화면 이동',
             icon: Icons.grid_view_rounded,
             onPressed: () => Navigator.push(
@@ -69,7 +70,7 @@ class _WDeviceControlPanelState extends ConsumerState<WDeviceControlPanel> {
             isPrimary: true,
           ),
           const SizedBox(height: 12),
-          _buildActionButton(
+          WActionButton(
             label: '통신 채널 연결',
             icon: Icons.sync_rounded,
             onPressed: widget.notifier.setupCommunication,
@@ -77,7 +78,7 @@ class _WDeviceControlPanelState extends ConsumerState<WDeviceControlPanel> {
           ),
           const SizedBox(height: 32),
           const Text(
-            '메시지 전송',
+            '메세지 전송',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
@@ -112,35 +113,6 @@ class _WDeviceControlPanelState extends ConsumerState<WDeviceControlPanel> {
             },
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required String label,
-    required IconData icon,
-    required VoidCallback onPressed,
-    required Color color,
-    bool isPrimary = false,
-  }) {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: ElevatedButton.icon(
-        icon: Icon(icon, size: 20),
-        label: Text(label),
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isPrimary ? color : color.withValues(alpha: 0.08),
-          foregroundColor: isPrimary ? Colors.white : color,
-          elevation: 0,
-          side: isPrimary
-              ? null
-              : BorderSide(color: color.withValues(alpha: 0.2)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
       ),
     );
   }

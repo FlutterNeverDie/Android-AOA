@@ -5,6 +5,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:file_picker/file_picker.dart';
 import '../providers/aoa_provider.dart';
 import '../providers/menu_provider.dart';
+import 'w_action_button.dart';
+import 'd_menu_import_confirm.dart';
 
 class WDeviceSubPanel extends ConsumerStatefulWidget {
   final AoaNotifier notifier;
@@ -32,7 +34,7 @@ class _WDeviceSubPanelState extends ConsumerState<WDeviceSubPanel> {
             ),
           ),
           const SizedBox(height: 24),
-          _buildActionButton(
+          WActionButton(
             label: '메뉴 동기화',
             icon: Icons.folder_open_rounded,
             onPressed: () => _handleImportFromLocal(context),
@@ -48,17 +50,17 @@ class _WDeviceSubPanelState extends ConsumerState<WDeviceSubPanel> {
             ),
           ),
           const SizedBox(height: 12),
-          _buildActionButton(
+          WActionButton(
             label: '파일 선택 후 전송',
             icon: Icons.upload_file_rounded,
             onPressed: () => _handleFileUpload(context),
             color: const Color(0xFFF97316),
           ),
           const SizedBox(height: 12),
-          _buildActionButton(
+          WActionButton(
             label: '지정 파일 내보내기',
-            icon: Icons.download_rounded,
-            onPressed: () => _handleExportToLocal(context),
+            icon: Icons.send_and_archive_rounded,
+            onPressed: () => _handleSendFixedFileToHost(context),
             color: const Color(0xFF06B6D4),
           ),
         ],
@@ -93,10 +95,25 @@ class _WDeviceSubPanelState extends ConsumerState<WDeviceSubPanel> {
       }
 
       if (mounted) {
-        _showConfirmDialog(context, content);
+        showDialog(
+          context: context,
+          builder: (context) => MenuImportConfirmDialog(
+            content: content,
+            onConfirm: () async {
+              final success = await ref
+                  .read(menuProvider.notifier)
+                  .syncMenu(content);
+              if (success && mounted) {
+                _showSnackBar(context, '메뉴가 성공적으로 로드되었습니다.');
+              }
+            },
+          ),
+        );
       }
     } catch (e) {
-      _showSnackBar(context, '파일 읽기 오류: $e', isError: true);
+      if (mounted) {
+        _showSnackBar(context, '파일 읽기 오류: $e', isError: true);
+      }
     }
   }
 
@@ -118,7 +135,7 @@ class _WDeviceSubPanelState extends ConsumerState<WDeviceSubPanel> {
   }
 
   /// 지정된 경로(/Download/Recipes.json)의 파일을 읽어 호스트 기기로 전송
-  Future<void> _handleExportToLocal(BuildContext context) async {
+  Future<void> _handleSendFixedFileToHost(BuildContext context) async {
     try {
       if (Platform.isAndroid) {
         if (!await _requestPermissions()) return;
@@ -134,7 +151,7 @@ class _WDeviceSubPanelState extends ConsumerState<WDeviceSubPanel> {
         }
 
         await widget.notifier.sendMenuFile(content);
-        if (mounted) { 
+        if (mounted) {
           _showSnackBar(context, '지정 경로의 Recipes.json을 호스트로 전송했습니다.');
         }
       } else {
@@ -143,7 +160,9 @@ class _WDeviceSubPanelState extends ConsumerState<WDeviceSubPanel> {
         }
       }
     } catch (e) {
-      _showSnackBar(context, '파일 전송 실패: $e', isError: true);
+      if (mounted) {
+        _showSnackBar(context, '파일 전송 실패: $e', isError: true);
+      }
     }
   }
 
@@ -158,117 +177,6 @@ class _WDeviceSubPanelState extends ConsumerState<WDeviceSubPanel> {
     return status.isGranted;
   }
 
-  void _showConfirmDialog(BuildContext context, String content) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('로컬 데이터 확인'),
-        content: const Text('파일 내용을 확인하고 동기화하시겠습니까?'),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소', style: TextStyle(color: Color(0xFF64748B))),
-          ),
-          TextButton(
-            onPressed: () => _showJsonViewer(context, content),
-            child: const Text(
-              '내용 확인',
-              style: TextStyle(color: Color(0xFF6366F1)),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              final success = await ref
-                  .read(menuProvider.notifier)
-                  .syncMenu(content);
-              if (success && context.mounted) {
-                _showSnackBar(context, '메뉴가 성공적으로 로드되었습니다.');
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6366F1),
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('불러오기'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showJsonViewer(BuildContext context, String json) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.8,
-          height: MediaQuery.of(context).size.height * 0.8,
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'JSON 원본 데이터',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-              const Divider(height: 32),
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: SingleChildScrollView(
-                    child: SelectableText(
-                      json,
-                      style: const TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 12,
-                        color: Color(0xFFE2E8F0),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6366F1),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    '닫기',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   void _showSnackBar(
     BuildContext context,
     String message, {
@@ -280,33 +188,6 @@ class _WDeviceSubPanelState extends ConsumerState<WDeviceSubPanel> {
         backgroundColor: isError
             ? const Color(0xFFEF4444)
             : const Color(0xFF10B981),
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required String label,
-    required IconData icon,
-    required VoidCallback onPressed,
-    required Color color,
-    bool isPrimary = false,
-  }) {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: ElevatedButton.icon(
-        icon: Icon(icon, size: 20),
-        label: Text(label),
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isPrimary ? color : color.withOpacity(0.08),
-          foregroundColor: isPrimary ? Colors.white : color,
-          elevation: 0,
-          side: isPrimary ? null : BorderSide(color: color.withOpacity(0.2)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
       ),
     );
   }
