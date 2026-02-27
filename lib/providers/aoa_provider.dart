@@ -12,12 +12,16 @@ class AoaState {
   final List<MAoaLog> logs;
   final bool isConnected;
   final List<PendingMenuFile> pendingFiles;
+  final String fileBuffer; // 파일 조각을 모으는 버퍼
+  final bool isReceivingFile; // 파일 수신 중인지 여부
 
   AoaState({
     this.mode = AppMode.selection,
     this.logs = const [],
     this.isConnected = false,
     this.pendingFiles = const [],
+    this.fileBuffer = '',
+    this.isReceivingFile = false,
   });
 
   AoaState copyWith({
@@ -25,12 +29,16 @@ class AoaState {
     List<MAoaLog>? logs,
     bool? isConnected,
     List<PendingMenuFile>? pendingFiles,
+    String? fileBuffer,
+    bool? isReceivingFile,
   }) {
     return AoaState(
       mode: mode ?? this.mode,
       logs: logs ?? this.logs,
       isConnected: isConnected ?? this.isConnected,
       pendingFiles: pendingFiles ?? this.pendingFiles,
+      fileBuffer: fileBuffer ?? this.fileBuffer,
+      isReceivingFile: isReceivingFile ?? this.isReceivingFile,
     );
   }
 }
@@ -72,6 +80,36 @@ class AoaNotifier extends StateNotifier<AoaState> {
         .replaceFirst('Received:', '')
         .trim();
 
+    if (content == 'FILE_SYNC_START') {
+      state = state.copyWith(fileBuffer: '', isReceivingFile: true);
+      addLog('[시스템] 파일 데이터 수신 시작...', type: LogType.system);
+      return;
+    }
+
+    if (content == 'FILE_SYNC_END') {
+      if (state.isReceivingFile) {
+        state = state.copyWith(
+          pendingFiles: [
+            ...state.pendingFiles,
+            PendingMenuFile(
+              receivedAt: DateTime.now(),
+              content: state.fileBuffer,
+            ),
+          ],
+          isReceivingFile: false,
+        );
+        addLog('[시스템] 파일 수신 완료! 수신함에서 확인하세요.', type: LogType.system);
+      }
+      return;
+    }
+
+    if (state.isReceivingFile) {
+      // 파일 수신 중이라면 버퍼에 추가만 함
+      state = state.copyWith(fileBuffer: state.fileBuffer + content);
+      return;
+    }
+
+    // 기존 단일 메시지 처리 (호환성 유지)
     if (content.startsWith('FILE_SYNC:')) {
       final jsonContent = content.substring('FILE_SYNC:'.length);
       state = state.copyWith(
@@ -80,7 +118,7 @@ class AoaNotifier extends StateNotifier<AoaState> {
           PendingMenuFile(receivedAt: DateTime.now(), content: jsonContent),
         ],
       );
-      addLog('[시스템] 새로운 메뉴 설정 파일이 수신함에 담겼습니다.', type: LogType.system);
+      addLog('[시스템] 단일 패킷 파일 수신됨', type: LogType.system);
     } else if (content.startsWith('ORDER_STATUS:')) {
       final status = content.substring('ORDER_STATUS:'.length);
       addLog('[주문] $status', type: LogType.system);
@@ -144,7 +182,22 @@ class AoaNotifier extends StateNotifier<AoaState> {
   }
 
   Future<void> sendMenuFile(String jsonContent) async {
-    await sendMessage('FILE_SYNC:$jsonContent');
+    // 크기가 크면 쪼개서 보냄 (청크 전송)
+    await sendMessage('FILE_SYNC_START');
+
+    // 8KB씩 쪼개서 전송하여 확실한 전달 도모
+    const int chunkSize = 8192;
+    int index = 0;
+    while (index < jsonContent.length) {
+      int end = index + chunkSize;
+      if (end > jsonContent.length) end = jsonContent.length;
+      await sendMessage(jsonContent.substring(index, end));
+      index = end;
+      // 너무 빠르면 네이티브 버퍼가 꼬일 수 있으므로 아주 짧은 지연
+      await Future.delayed(const Duration(milliseconds: 50));
+    }
+
+    await sendMessage('FILE_SYNC_END');
   }
 
   Future<void> sendOrderStatus(String status) async {

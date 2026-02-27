@@ -19,82 +19,62 @@ class MenuBoardScreen extends ConsumerWidget {
         children: [
           _buildBackground(),
           SafeArea(
-            child: Column(
-              children: [
-                _buildAppBar(context, isConnected),
-                Expanded(
-                  child: menuList.isEmpty
-                      ? _buildEmptyState()
-                      : _buildMenuGrid(context, ref, menuList),
+            child: menuList.isEmpty
+                ? _buildEmptyState()
+                : _buildMenuGrid(context, ref, menuList),
+          ),
+          // 우측 상단 닫기 버튼
+          Positioned(
+            top: 20,
+            right: 20,
+            child: Material(
+              color: Colors.white.withValues(alpha: 0.8),
+              shape: const CircleBorder(),
+              elevation: 4,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.close_rounded,
+                  color: Colors.black87,
+                  size: 28,
                 ),
-              ],
+                onPressed: () => Navigator.pop(context),
+              ),
             ),
           ),
+          // 연결 상태 미니 레이블
+          Positioned(
+            bottom: 20,
+            right: 20,
+            child: _buildMiniStatusLabel(isConnected),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildAppBar(BuildContext context, bool isConnected) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            onPressed: () => Navigator.pop(context),
-          ),
-          const SizedBox(width: 8),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'AOA Tea Time',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -1,
-                ),
-              ),
-              Text(
-                'Premium Kiosk Experience',
-                style: TextStyle(color: Colors.grey, fontSize: 14),
-              ),
-            ],
-          ),
-          const Spacer(),
-          _buildStatusLabel(isConnected),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatusLabel(bool isConnected) {
+  Widget _buildMiniStatusLabel(bool isConnected) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: isConnected
-            ? Colors.green.withValues(alpha: 0.1)
-            : Colors.red.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isConnected
-              ? Colors.green.withValues(alpha: 0.3)
-              : Colors.red.withValues(alpha: 0.3),
-        ),
+        color: Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4),
+        ],
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             Icons.circle,
-            size: 8,
+            size: 6,
             color: isConnected ? Colors.green : Colors.red,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Text(
-            isConnected ? 'CONNECTED' : 'OFFLINE',
+            isConnected ? 'ON' : 'OFF',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 10,
               fontWeight: FontWeight.bold,
               color: isConnected ? Colors.green : Colors.red,
             ),
@@ -133,7 +113,7 @@ class MenuBoardScreen extends ConsumerWidget {
     return GridView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 8, // 1줄에 8개 배치
+        crossAxisCount: 6, // 1줄에 8개 배치
         childAspectRatio: 0.65, // 세로로 조금 더 길게
         crossAxisSpacing: 12,
         mainAxisSpacing: 16,

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/m_drink.dart';
 import '../repositories/repo_menu.dart';
@@ -23,9 +24,21 @@ class MenuNotifier extends Notifier<List<DrinkModel>> {
     final data = await _repository.loadMenuData();
     if (data != null) {
       try {
-        final List<dynamic> jsonList = jsonDecode(data);
-        state = jsonList.map((e) => DrinkModel.fromJson(e)).toList();
+        String sanitizedData = data.trim();
+        // JSON 마지막 요소 뒤에 불필요한 쉼표가 있는 경우 제거 (예: [{}, {},])
+        sanitizedData = sanitizedData.replaceAll(RegExp(r',\s*\]'), ']');
+
+        final List<dynamic> jsonList = jsonDecode(sanitizedData);
+        final newState = jsonList.map((e) => DrinkModel.fromJson(e)).toList();
+
+        state = newState;
+
+        // 성공 로그 (AOA 콘솔)
+        // ignore: avoid_manual_providers_as_extension_setters
+        // ref.read(aoaProvider.notifier).addLog('[시스템] 메뉴판 데이터 ${newState.length}건이 로드되었습니다.');
       } catch (e) {
+        // 파싱 실패 시 상위 알림 (어려우면 print라도)
+        debugPrint('Menu Parse Error: $e');
         state = [];
       }
     }
