@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/aoa_provider.dart';
 import '../widgets/w_glass_panel.dart';
 import '../widgets/w_console_log.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 
 class DeviceModeScreen extends ConsumerStatefulWidget {
   const DeviceModeScreen({super.key});
@@ -96,7 +98,7 @@ class _DeviceModeScreenState extends ConsumerState<DeviceModeScreen> {
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -154,9 +156,40 @@ class _DeviceModeScreenState extends ConsumerState<DeviceModeScreen> {
           label: const Text('통신 채널 연결'),
           onPressed: notifier.setupCommunication,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF10B981).withOpacity(0.08),
+            backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.08),
             foregroundColor: const Color(0xFF10B981),
             side: const BorderSide(color: Color(0xFF10B981)),
+            minimumSize: const Size(double.infinity, 56),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        ElevatedButton.icon(
+          icon: const Icon(Icons.upload_file_rounded),
+          label: const Text('메뉴 설정 파일 업로드'),
+          onPressed: () async {
+            final result = await FilePicker.platform.pickFiles(
+              type: FileType.custom,
+              allowedExtensions: ['json'],
+            );
+
+            if (result != null && result.files.single.path != null) {
+              final file = File(result.files.single.path!);
+              final content = await file.readAsString();
+              await notifier.sendMenuFile(content);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('메뉴 파일이 전송되었습니다.')),
+                );
+              }
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF6366F1).withValues(alpha: 0.08),
+            foregroundColor: const Color(0xFF6366F1),
+            side: const BorderSide(color: Color(0xFF6366F1)),
             minimumSize: const Size(double.infinity, 56),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),

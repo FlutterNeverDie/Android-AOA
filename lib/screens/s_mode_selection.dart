@@ -101,7 +101,7 @@ class ModeSelectionScreen extends ConsumerWidget {
             height: 500,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF6366F1).withOpacity(0.08),
+              color: const Color(0xFF6366F1).withValues(alpha: 0.08),
             ),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
@@ -117,7 +117,7 @@ class ModeSelectionScreen extends ConsumerWidget {
             height: 500,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFEC4899).withOpacity(0.05),
+              color: const Color(0xFFEC4899).withValues(alpha: 0.05),
             ),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
@@ -147,7 +147,7 @@ class ModeSelectionScreen extends ConsumerWidget {
           borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               blurRadius: 40,
               offset: const Offset(0, 20),
             ),
@@ -162,7 +162,7 @@ class ModeSelectionScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: Icon(icon, size: 56, color: color),

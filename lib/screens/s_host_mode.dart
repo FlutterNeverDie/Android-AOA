@@ -5,6 +5,9 @@ import '../providers/aoa_provider.dart';
 import '../widgets/w_glass_panel.dart';
 import '../widgets/w_console_log.dart';
 import '../dialogs/d_aoa_info.dart';
+import '../providers/menu_provider.dart';
+import 's_menu_board.dart';
+import 'package:intl/intl.dart';
 
 class HostModeScreen extends ConsumerStatefulWidget {
   const HostModeScreen({super.key});
@@ -35,42 +38,50 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
     final notifier = ref.read(aoaProvider.notifier);
 
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false, // 레이아웃 안정성을 위해 false 설정
       body: Stack(
         children: [
           _buildBackground(),
           SafeArea(
-            child: SingleChildScrollView(
+            child: Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 children: [
                   _buildHeader(context),
                   const SizedBox(height: 24),
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.72,
+                  Expanded(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         // 좌측 제어 패널
                         WGlassPanel(
                           width: 320,
-                          child: _buildLeftPanel(state, notifier),
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(20),
+                            child: _buildLeftPanel(state, notifier),
+                          ),
                         ),
                         const SizedBox(width: 20),
                         // 중앙 콘솔
                         Expanded(
                           child: WGlassPanel(
-                            child: WConsoleLog(
-                              logs: state.logs,
-                              onClear: notifier.clearLogs,
+                            child: Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: WConsoleLog(
+                                logs: state.logs,
+                                onClear: notifier.clearLogs,
+                              ),
                             ),
                           ),
                         ),
                         const SizedBox(width: 20),
                         // 우측 서브 패널
                         WGlassPanel(
-                          width: 240,
-                          child: _buildRightPanel(state, notifier),
+                          width: 320,
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(20),
+                            child: _buildRightPanel(state, notifier),
+                          ),
                         ),
                       ],
                     ),
@@ -242,6 +253,23 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
             },
             color: const Color(0xFF6366F1),
           ),
+          const SizedBox(height: 12),
+          _buildActionButton(
+            label: '메뉴판 보기',
+            icon: Icons.grid_view_rounded,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const MenuBoardScreen(),
+                  settings: const RouteSettings(
+                    name: MenuBoardScreen.routeName,
+                  ),
+                ),
+              );
+            },
+            color: const Color(0xFFEC4899),
+          ),
         ],
       ),
     );
@@ -254,14 +282,32 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '설정 및 도구',
+            '수신된 설정 파일 (JSON)',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
               color: Color(0xFF0F172A),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
+          Expanded(
+            child: state.pendingFiles.isEmpty
+                ? _buildEmptyPendingList()
+                : _buildPendingFileList(state, notifier),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Divider(),
+          ),
+          const Text(
+            '설정 및 도구',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(height: 12),
           _buildSubButton(
             label: '장치 정보 설정',
             icon: Icons.settings_suggest_rounded,
@@ -293,12 +339,21 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
             icon: Icons.home_outlined,
             onTap: () => notifier.setMode(AppMode.selection),
           ),
-          const Spacer(),
+          _buildSubButton(
+            label: '강제 연결 종료',
+            icon: Icons.link_off_rounded,
+            onTap: () {
+              // TODO: 명시적 연결 종료 명령 전달 (추후 네이티브 보완 가능)
+              notifier.addLog('[안내] 연결 종료 요청됨');
+            },
+          ),
+          const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
+              color: const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFF1F5F9)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -430,6 +485,101 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildEmptyPendingList() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.folder_open_rounded, color: Color(0xFFCBD5E1), size: 32),
+          SizedBox(height: 8),
+          Text(
+            '수신된 파일 없음',
+            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPendingFileList(AoaState state, AoaNotifier notifier) {
+    return ListView.separated(
+      itemCount: state.pendingFiles.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        final file = state.pendingFiles[index];
+        final timeStr = DateFormat('HH:mm:ss').format(file.receivedAt);
+
+        return Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.description_outlined,
+                    size: 16,
+                    color: Color(0xFF6366F1),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '메뉴 구성 ($timeStr)',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final success = await ref
+                        .read(menuProvider.notifier)
+                        .syncMenu(file.content);
+                    if (success) {
+                      notifier.removePendingFile(index);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('메뉴 데이터가 동기화되었습니다.')),
+                        );
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6366F1),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 0),
+                    minimumSize: const Size(0, 32),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('동기화', style: TextStyle(fontSize: 12)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

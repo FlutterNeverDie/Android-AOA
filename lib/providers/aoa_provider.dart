@@ -3,30 +3,40 @@ import 'package:flutter_riverpod/legacy.dart';
 import '../models/m_aoa.dart';
 import '../repositories/repo_aoa.dart';
 
+import '../models/m_pending_file.dart';
+
 enum AppMode { selection, host, device }
 
 class AoaState {
   final AppMode mode;
   final List<MAoaLog> logs;
   final bool isConnected;
+  final List<PendingMenuFile> pendingFiles;
 
   AoaState({
     this.mode = AppMode.selection,
     this.logs = const [],
     this.isConnected = false,
+    this.pendingFiles = const [],
   });
 
-  AoaState copyWith({AppMode? mode, List<MAoaLog>? logs, bool? isConnected}) {
+  AoaState copyWith({
+    AppMode? mode,
+    List<MAoaLog>? logs,
+    bool? isConnected,
+    List<PendingMenuFile>? pendingFiles,
+  }) {
     return AoaState(
       mode: mode ?? this.mode,
       logs: logs ?? this.logs,
       isConnected: isConnected ?? this.isConnected,
+      pendingFiles: pendingFiles ?? this.pendingFiles,
     );
   }
 }
 
 class AoaNotifier extends StateNotifier<AoaState> {
-  final RepoAoa _repo; 
+  final RepoAoa _repo;
 
   AoaNotifier(this._repo) : super(AoaState()) {
     _repo.logStream.listen((msg) {
@@ -37,15 +47,46 @@ class AoaNotifier extends StateNotifier<AoaState> {
         type = LogType.sent;
       } else if (msg.contains('수신됨:') || msg.contains('Received:')) {
         type = LogType.received;
+        _parseIncomingMessage(msg);
       } else if (msg.contains('오류') ||
           msg.contains('실패') ||
           msg.contains('Error') ||
           msg.contains('Failed')) {
         type = LogType.error;
+      } else if (msg.contains('연결 종료') || msg.contains('Disconnected')) {
+        state = state.copyWith(isConnected: false);
       }
 
       addLog(msg, type: type);
     });
+  }
+
+  void _parseIncomingMessage(String rawMsg) {
+    // 수신됨: {내용} 형식에서 내용만 추출
+    final content = rawMsg
+        .replaceFirst('수신됨:', '')
+        .replaceFirst('Received:', '')
+        .trim();
+
+    if (content.startsWith('FILE_SYNC:')) {
+      final jsonContent = content.substring('FILE_SYNC:'.length);
+      state = state.copyWith(
+        pendingFiles: [
+          ...state.pendingFiles,
+          PendingMenuFile(receivedAt: DateTime.now(), content: jsonContent),
+        ],
+      );
+      addLog('[시스템] 새로운 메뉴 설정 파일이 수신함에 담겼습니다.', type: LogType.system);
+    } else if (content.startsWith('ORDER_STATUS:')) {
+      final status = content.substring('ORDER_STATUS:'.length);
+      addLog('[주문] $status', type: LogType.system);
+    }
+  }
+
+  void removePendingFile(int index) {
+    final newList = List<PendingMenuFile>.from(state.pendingFiles);
+    newList.removeAt(index);
+    state = state.copyWith(pendingFiles: newList);
   }
 
   void setMode(AppMode mode) {
@@ -96,6 +137,14 @@ class AoaNotifier extends StateNotifier<AoaState> {
     } else {
       addLog('메시지 전송 실패', type: LogType.error);
     }
+  }
+
+  Future<void> sendMenuFile(String jsonContent) async {
+    await sendMessage('FILE_SYNC:$jsonContent');
+  }
+
+  Future<void> sendOrderStatus(String status) async {
+    await sendMessage('ORDER_STATUS:$status');
   }
 }
 

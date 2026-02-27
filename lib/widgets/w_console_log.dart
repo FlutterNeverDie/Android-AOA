@@ -71,7 +71,7 @@ class _WConsoleLogState extends State<WConsoleLog> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -96,7 +96,7 @@ class _WConsoleLogState extends State<WConsoleLog> {
                           TextSpan(
                             text: '${log.formattedTime} ',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.35),
+                              color: Colors.white.withValues(alpha: 0.35),
                             ),
                           ),
                           TextSpan(
@@ -130,7 +130,6 @@ class _WConsoleLogState extends State<WConsoleLog> {
       case LogType.error:
         return const Color(0xFFF87171); // Bright Red
       case LogType.system:
-      default:
         return const Color(0xFFE2E8F0); // Off White
     }
   }
