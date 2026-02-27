@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Filter for when THIS device is in Accessory Mode (connected to a Host) -->
-    <usb-accessory 
-        manufacturer="SCS PRO" 
-        model="NMP-10" 
-        version="1.0" />
+    <!-- manufacturer와 model이 호스트가 보낸 문자열과 정확히 일치해야 함 -->
+    <usb-accessory manufacturer="SCS PRO" model="NMP-10" />
 </resources>

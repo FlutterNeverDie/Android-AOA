@@ -32,17 +32,19 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
     final notifier = ref.read(aoaProvider.notifier);
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
           _buildBackground(),
           SafeArea(
-            child: Padding(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 children: [
                   _buildHeader(context),
                   const SizedBox(height: 24),
-                  Expanded(
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.75,
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [

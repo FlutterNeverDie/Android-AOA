@@ -98,6 +98,14 @@ class MainActivity : FlutterActivity() {
         )
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (intent.action == UsbManager.ACTION_USB_ACCESSORY_ATTACHED) {
+            accessory = intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY)
+            logToFlutter("[시스템] 새로운 액세서리 연결을 감지했습니다.")
+        }
+    }
+
     private fun logToFlutter(msg: String) {
         handler.post { eventSink?.success(msg) }
     }
@@ -133,7 +141,8 @@ class MainActivity : FlutterActivity() {
             } else {
                 PendingIntent.FLAG_UPDATE_CURRENT
             }
-            
+
+            // 권한 요청을 위한 PendingIntent 생성 및 BroadcastReceiver 등록
             val pi = PendingIntent.getBroadcast(this, 0, Intent(ACTION_USB_PERMISSION), flags)
             registerReceiver(usbReceiver, IntentFilter(ACTION_USB_PERMISSION))
             usbManager?.requestPermission(target, pi)
@@ -162,18 +171,25 @@ class MainActivity : FlutterActivity() {
         }
         logToFlutter("[명령] AOA 핸드셰이크 시퀀스 시작...")
         
+        // 공백이나 특수문자 실수를 방지하기 위해 trim() 처리
+        val m = manuf.trim()
+        val mo = model.trim()
+        val v = ver.trim()
+
         val proto = ByteArray(2)
         conn.controlTransfer(0xC0, 51, 0, 0, proto, 2, 1000)
         
         val sendStr = { idx: Int, s: String ->
-            val b = s.toByteArray()
+            // AOA 프로토콜 사양에 따라 문자열은 반드시 null-terminated (\u0000)여야 합니다.
+            val nullTerminatedString = s + "\u0000"
+            val b = nullTerminatedString.toByteArray(StandardCharsets.UTF_8)
             conn.controlTransfer(0x40, 52, 0, idx, b, b.size, 1000)
         }
         
-        sendStr(0, manuf)
-        sendStr(1, model)
-        sendStr(2, "AOA 티타임 호스트")
-        sendStr(3, ver)
+        sendStr(0, m)
+        sendStr(1, mo)
+        sendStr(2, "AOA 티타임")
+        sendStr(3, v)
         
         logToFlutter("[명령] START 신호 전송")
         conn.controlTransfer(0x40, 53, 0, 0, null, 0, 1000)
