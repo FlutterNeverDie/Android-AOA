@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Filter for when THIS device is in Accessory Mode (connected to a Host) -->
+    <usb-accessory 
+        manufacturer="SCS PRO" 
+        model="NMP-10" 
+        version="1.0" />
+</resources>
