@@ -146,7 +146,7 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -175,7 +175,7 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
           ),
         ],
       ),
-    );
+    ); 
   }
 
   Widget _buildLeftPanel(AoaState state, AoaNotifier notifier) {
@@ -289,14 +289,14 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
         label: Text(label),
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: color.withOpacity(0.1),
+          backgroundColor: color.withValues(alpha: 0.1),
           foregroundColor: color,
           elevation: 0,
           alignment: Alignment.centerLeft,
           padding: const EdgeInsets.symmetric(horizontal: 20),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: color.withOpacity(0.2)),
+            side: BorderSide(color: color.withValues(alpha: 0.2)),
           ),
         ),
       ),
@@ -314,7 +314,7 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
             height: 400,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF6366F1).withOpacity(0.05),
+              color: const Color(0xFF6366F1).withValues(alpha: 0.05),
             ),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),

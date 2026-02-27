@@ -55,6 +55,10 @@ class AoaNotifier extends StateNotifier<AoaState> {
         type = LogType.error;
       } else if (msg.contains('연결 종료') || msg.contains('Disconnected')) {
         state = state.copyWith(isConnected: false);
+      } else if (msg.contains('연결됨') ||
+          msg.contains('활성화되었습니다') ||
+          msg.contains('Connected')) {
+        state = state.copyWith(isConnected: true);
       }
 
       addLog(msg, type: type);

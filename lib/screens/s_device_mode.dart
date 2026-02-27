@@ -99,6 +99,7 @@ class _DeviceModeScreenState extends ConsumerState<DeviceModeScreen> {
   }
 
   Widget _buildStatusBar() {
+    final isConnected = ref.watch(aoaProvider).isConnected;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
@@ -113,13 +114,22 @@ class _DeviceModeScreenState extends ConsumerState<DeviceModeScreen> {
           ),
         ],
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.usb_rounded, size: 18, color: Color(0xFF6366F1)),
-          SizedBox(width: 10),
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isConnected
+                  ? const Color(0xFF10B981)
+                  : const Color(0xFFF59E0B),
+            ),
+          ),
+          const SizedBox(width: 10),
           Text(
-            '호스트 대기 중...',
-            style: TextStyle(
+            isConnected ? '호스트 연결됨' : '호스트 대기 중...',
+            style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: Color(0xFF475569),
