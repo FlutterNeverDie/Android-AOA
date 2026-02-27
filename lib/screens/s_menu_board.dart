@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/menu_provider.dart';
 import '../providers/aoa_provider.dart';
 import '../models/m_drink.dart';
+import '../widgets/w_menu_app_bar.dart';
+import '../widgets/w_menu_sidebar.dart';
+import '../widgets/w_menu_item_card.dart';
 
 class MenuBoardScreen extends ConsumerWidget {
   const MenuBoardScreen({super.key});
@@ -12,71 +15,35 @@ class MenuBoardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final menuList = ref.watch(menuProvider);
-    final isConnected = ref.watch(aoaProvider).isConnected;
 
     return Scaffold(
-      body: Stack(
+      backgroundColor: Colors.white,
+      body: Column(
         children: [
-          _buildBackground(),
-          SafeArea(
-            child: menuList.isEmpty
-                ? _buildEmptyState()
-                : _buildMenuGrid(context, ref, menuList),
-          ),
-          // 우측 상단 닫기 버튼
-          Positioned(
-            top: 20,
-            right: 20,
-            child: Material(
-              color: Colors.white.withValues(alpha: 0.8),
-              shape: const CircleBorder(),
-              elevation: 4,
-              child: IconButton(
-                icon: const Icon(
-                  Icons.close_rounded,
-                  color: Colors.black87,
-                  size: 28,
-                ),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ),
-          ),
-          // 연결 상태 미니 레이블
-          Positioned(
-            bottom: 20,
-            right: 20,
-            child: _buildMiniStatusLabel(isConnected),
-          ),
-        ],
-      ),
-    );
-  }
+          // 1. 상단 앱바
+          const WMenuAppBar(),
 
-  Widget _buildMiniStatusLabel(bool isConnected) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.circle,
-            size: 6,
-            color: isConnected ? Colors.green : Colors.red,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            isConnected ? 'ON' : 'OFF',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: isConnected ? Colors.green : Colors.red,
+          // 2. 메인 컨텐츠 (그리드 + 사이드바)
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
+              child: Row(
+                children: [
+                  // 좌측: 메뉴 그리드
+                  Expanded(
+                    flex: 3,
+                    child: Container(
+                      color: const Color(0xFFF8FAFC),
+                      child: menuList.isEmpty
+                          ? _buildEmptyState()
+                          : _buildMenuGrid(context, ref, menuList),
+                    ),
+                  ),
+
+                  // 우측: 장바구니 사이드바
+                  const WMenuSidebar(),
+                ],
+              ),
             ),
           ),
         ],
@@ -85,20 +52,16 @@ class MenuBoardScreen extends ConsumerWidget {
   }
 
   Widget _buildEmptyState() {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.no_drinks_outlined,
-            size: 80,
-            color: Colors.grey.withValues(alpha: 0.3),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            '등록된 메뉴가 없습니다.\n디바이스에서 메뉴 설정을 전송해주세요.',
+          Icon(Icons.no_drinks_outlined, size: 80, color: Colors.black12),
+          SizedBox(height: 16),
+          Text(
+            '등록된 메뉴가 없습니다.\n동기화가 필요합니다.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey, fontSize: 16),
+            style: TextStyle(color: Colors.grey, fontSize: 18),
           ),
         ],
       ),
@@ -111,166 +74,23 @@ class MenuBoardScreen extends ConsumerWidget {
     List<DrinkModel> menuList,
   ) {
     return GridView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      padding: EdgeInsets.zero,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 6, // 1줄에 8개 배치
-        childAspectRatio: 0.65, // 세로로 조금 더 길게
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 16,
+        crossAxisCount: 6, // 사진처럼 6열 배치
+        childAspectRatio: 0.7, // 사진 속 카드의 세로 비율 반영
+        crossAxisSpacing: 0, // 카드 간 테두리가 겹치도록 설정
+        mainAxisSpacing: 0,
       ),
       itemCount: menuList.length,
       itemBuilder: (context, index) {
         final item = menuList[index];
-        return _buildMenuCard(ref, item);
+        return WMenuItemCard(
+          item: item,
+          onTap: () {
+            ref.read(aoaProvider.notifier).sendOrderStatus('${item.name} 선택됨');
+          },
+        );
       },
-    );
-  }
-
-  Widget _buildMenuCard(WidgetRef ref, DrinkModel item) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(color: const Color(0xFFF1F5F9)),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Stack(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // 상단 아이콘/이미지 영역
-                Expanded(
-                  flex: 5,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    color: const Color(0xFFF8FAFC),
-                    child: Center(
-                      child: Icon(
-                        _getIconData(item.type),
-                        size: 40, // 크기 축소
-                        color: const Color(0xFF6366F1).withValues(alpha: 0.6),
-                      ),
-                    ),
-                  ),
-                ),
-                // 하단 정보 영역
-                Expanded(
-                  flex: 4,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          item.name,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 13, // 폰트 크기 축소
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E293B),
-                            height: 1.2,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${item.price}원',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF6366F1),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            // HOT/ICE 태그 (예시)
-            if (item.isHotDrink == 'H' || item.isHotDrink == 'I')
-              Positioned(
-                top: 8,
-                left: 8,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: item.isHotDrink == 'H' ? Colors.red : Colors.blue,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    item.isHotDrink == 'H' ? 'HOT' : 'ICE',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 8,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  ref
-                      .read(aoaProvider.notifier)
-                      .sendOrderStatus('${item.name} 주문됨');
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  IconData _getIconData(String type) {
-    switch (type) {
-      case 'AM':
-        return Icons.coffee_rounded;
-      case 'CO':
-        return Icons.coffee_maker_rounded;
-      case 'CL':
-        return Icons.local_cafe_rounded;
-      case 'IC':
-        return Icons.icecream_rounded;
-      default:
-        return Icons.local_drink_rounded;
-    }
-  }
-
-  Widget _buildBackground() {
-    return Container(
-      color: const Color(0xFFF1F5F9),
-      child: Stack(
-        children: [
-          Positioned(
-            top: -100,
-            right: -100,
-            child: Container(
-              width: 400,
-              height: 400,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF6366F1).withValues(alpha: 0.05),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
