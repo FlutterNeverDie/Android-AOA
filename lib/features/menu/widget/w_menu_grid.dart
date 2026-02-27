@@ -17,7 +17,7 @@ class WMenuGrid extends ConsumerWidget {
       padding: EdgeInsets.zero,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 5, // 5열 배치
-        childAspectRatio: 0.805, // 카드의 세로 비율
+        childAspectRatio: 0.8, // 카드의 세로 비율
         crossAxisSpacing: 0,
         mainAxisSpacing: 0,
       ),

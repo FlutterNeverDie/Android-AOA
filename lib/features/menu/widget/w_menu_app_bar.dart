@@ -28,7 +28,7 @@ class WMenuAppBar extends StatelessWidget {
               IconButton(
                 onPressed: () => Navigator.maybePop(context),
                 icon: const Icon(
-                  Icons.close_rounded,
+                  Icons.home,
                   color: Colors.white60,
                   size: 28,
                 ),

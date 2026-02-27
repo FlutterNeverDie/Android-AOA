@@ -224,11 +224,90 @@ class WMenuSidebar extends ConsumerWidget {
                                 .read(aoaProvider.notifier)
                                 .sendOrderPay(orderMsg);
                             cartNotifier.clearCart();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  '주문이 완료되었습니다.',
-                                  textAlign: TextAlign.center,
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (context) => Dialog(
+                                backgroundColor: Colors.transparent,
+                                child: Container(
+                                  width: 440,
+                                  padding: const EdgeInsets.all(48),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(40),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.1),
+                                        blurRadius: 30,
+                                        offset: const Offset(0, 15),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(24),
+                                        decoration: BoxDecoration(
+                                          color: const Color(
+                                            0xFFD4A373,
+                                          ).withOpacity(0.1),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.check_circle_rounded,
+                                          size: 80,
+                                          color: Color(0xFFD4A373),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 32),
+                                      const Text(
+                                        '주문 완료',
+                                        style: TextStyle(
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.w900,
+                                          color: Color(0xFF2C1810),
+                                          letterSpacing: -1,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      const Text(
+                                        '맛있게 준비해 드릴게요!\n잠시만 기다려 주세요.',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          color: Color(0xFF64748B),
+                                          height: 1.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 48),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: 64,
+                                        child: ElevatedButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(
+                                              0xFF2C1810,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            '확인',
+                                            style: TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             );

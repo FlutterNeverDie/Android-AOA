@@ -53,9 +53,7 @@ class WMenuLockOverlay extends StatelessWidget {
                     ),
                     const SizedBox(height: 32),
                     Text(
-                      lockedBy == 'Host'
-                          ? '바리스타가\n설정을 변경 중입니다'
-                          : '다른 손님이\n주문하고 있습니다',
+                      '반대쪽 기기에서\n사용 중입니다',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 28,
