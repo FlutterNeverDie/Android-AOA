@@ -15,6 +15,9 @@ class AoaState {
   final String fileBuffer; // 파일 조각을 모으는 버퍼
   final bool isReceivingFile; // 파일 수신 중인지 여부
 
+  final bool isRemoteLocked; // 상대방이 사용 중인지 여부
+  final String? lockedBy; // 누구에 의해 잠겼는지 (Host/Device)
+
   AoaState({
     this.mode = AppMode.selection,
     this.logs = const [],
@@ -22,15 +25,20 @@ class AoaState {
     this.pendingFiles = const [],
     this.fileBuffer = '',
     this.isReceivingFile = false,
+    this.isRemoteLocked = false,
+    this.lockedBy,
   });
 
   AoaState copyWith({
     AppMode? mode,
     List<MAoaLog>? logs,
     bool? isConnected,
+    List<MAoaLog>? currentLogs,
     List<PendingMenuFile>? pendingFiles,
     String? fileBuffer,
     bool? isReceivingFile,
+    bool? isRemoteLocked,
+    String? lockedBy,
   }) {
     return AoaState(
       mode: mode ?? this.mode,
@@ -39,6 +47,8 @@ class AoaState {
       pendingFiles: pendingFiles ?? this.pendingFiles,
       fileBuffer: fileBuffer ?? this.fileBuffer,
       isReceivingFile: isReceivingFile ?? this.isReceivingFile,
+      isRemoteLocked: isRemoteLocked ?? this.isRemoteLocked,
+      lockedBy: lockedBy ?? this.lockedBy,
     );
   }
 }
@@ -48,46 +58,53 @@ class AoaNotifier extends StateNotifier<AoaState> {
 
   AoaNotifier(this._repo) : super(AoaState()) {
     _repo.logStream.listen((msg) {
-      LogType type = LogType.system;
+      // 1. 상태 업데이트 및 네이티브 내부 로그 판별
+      if (msg.startsWith('[') || msg.startsWith('->')) {
+        LogType type = LogType.system;
+        if (msg.contains('오류') || msg.contains('실패')) type = LogType.error;
 
-      // 네이티브에서 넘어오는 한글 로그 패턴 매칭
-      if (msg.contains('보냄:') || msg.contains('→ Sent:')) {
-        type = LogType.sent;
-      } else if (msg.contains('수신됨:') || msg.contains('Received:')) {
-        // 원본 수신 로그는 남기되, UI 로그 추가는 _parseIncomingMessage에서 제어함
-        _parseIncomingMessage(msg);
-      } else if (msg.contains('오류') ||
-          msg.contains('실패') ||
-          msg.contains('Error') ||
-          msg.contains('Failed')) {
-        type = LogType.error;
-      } else if (msg.contains('연결 종료') || msg.contains('Disconnected')) {
-        state = state.copyWith(isConnected: false);
-      } else if (msg.contains('연결됨') ||
-          msg.contains('활성화되었습니다') ||
-          msg.contains('Connected')) {
-        state = state.copyWith(isConnected: true);
+        // 연결 상태 동기화
+        if (msg.contains('연결됨') ||
+            msg.contains('활성화되었습니다') ||
+            msg.contains('Connected') ||
+            msg.contains('성공')) {
+          state = state.copyWith(isConnected: true);
+        } else if (msg.contains('연결 종료') ||
+            msg.contains('Disconnected') ||
+            msg.contains('중단')) {
+          state = state.copyWith(isConnected: false);
+        }
+
+        addLog(msg, type: type);
+        return;
       }
 
-      addLog(msg, type: type);
+      // 2. 보낸 메시지 로그 (네이티브 출력물)
+      if (msg.contains('보냄:') || msg.contains('Sent:')) {
+        // 이미 Flutter sendMessage에서 로그를 남기므로 여기서는 무시하거나 전용 타입 부여
+        return;
+      }
+
+      // 3. 그 외의 모든 데이터는 AOA 수신 데이터로 간주하여 파서로 보냄
+      _parseIncomingMessage(msg);
     });
   }
 
   void _parseIncomingMessage(String rawMsg) {
-    // 1. 순수 내용 추출 (네이티브 접두어 제거)
+    // 레거시 접두어가 남아있을 경우를 대비해 제거 후 공백 정리
     final content = rawMsg
         .replaceFirst('수신됨:', '')
         .replaceFirst('Received:', '')
         .trim();
 
-    // 2. 파일 전송 마커 처리 (시스템/파일 플래그)
-    if (content == 'FILE_SYNC_START') {
+    // 1. 파일 전송 마커 처리
+    if (content == 'FILE_START') {
       state = state.copyWith(fileBuffer: '', isReceivingFile: true);
-      addLog('[파일] 메뉴 데이터 수신 시작...', type: LogType.system);
+      addLog('[파일] 데이터 수신 시작...', type: LogType.system);
       return;
     }
 
-    if (content == 'FILE_SYNC_END') {
+    if (content == 'FILE_END') {
       if (state.isReceivingFile) {
         state = state.copyWith(
           pendingFiles: [
@@ -99,41 +116,45 @@ class AoaNotifier extends StateNotifier<AoaState> {
           ],
           isReceivingFile: false,
         );
-        addLog('[파일] 메뉴 동기화 데이터 수신 완료', type: LogType.system);
+        addLog('[파일] 데이터 수신 완료', type: LogType.system);
       }
       return;
     }
 
-    // 3. 파일 데이터 수신 중 처리 (중간 청크들은 로그를 남기지 않음)
+    // 2. 파일 데이터 수신 중 처리
     if (state.isReceivingFile) {
       state = state.copyWith(fileBuffer: state.fileBuffer + content);
       return;
     }
 
+    // 3. 상호 제어 (LOCK) 플래그 처리
+    if (content.startsWith('LOCK:')) {
+      final status = content.substring(5);
+      if (status == 'BUSY') {
+        state = state.copyWith(
+          isRemoteLocked: true,
+          lockedBy: state.mode == AppMode.host ? 'Device' : 'Host',
+        );
+        addLog('[시스템] 상대방이 주문을 시작했습니다. (화면 잠금)', type: LogType.system);
+      } else if (status == 'FREE') {
+        state = state.copyWith(isRemoteLocked: false, lockedBy: null);
+        addLog('[시스템] 상대방 이용 종료. (잠금 해제)', type: LogType.system);
+      }
+      return;
+    }
+
     // 4. 타입별 메시지 처리
-    if (content.startsWith('SELECT_ITEM:')) {
-      final itemName = content.substring('SELECT_ITEM:'.length);
+    if (content.startsWith('SELECT:')) {
+      final itemName = content.substring(7);
       addLog('[주문] $itemName', type: LogType.system);
-    } else if (content.startsWith('ORDER_PAY:')) {
-      final list = content.substring('ORDER_PAY:'.length);
-      addLog('[결제] $list', type: LogType.system);
-    } else if (content.startsWith('ORDER_STATUS:')) {
-      final status = content.substring('ORDER_STATUS:'.length);
-      addLog('[상태] $status', type: LogType.system);
-    } else if (content.startsWith('FILE_SYNC:')) {
-      final jsonContent = content.substring('FILE_SYNC:'.length);
-      state = state.copyWith(
-        pendingFiles: [
-          ...state.pendingFiles,
-          PendingMenuFile(receivedAt: DateTime.now(), content: jsonContent),
-        ],
-      );
-      addLog('[파일] 단일 패킷 메뉴 데이터 수신됨', type: LogType.system);
+    } else if (content.startsWith('PAY:')) {
+      final detail = content.substring(4);
+      addLog('[결제] $detail', type: LogType.system);
     } else if (content.contains(':') && !content.startsWith('http')) {
-      // 플래그 형식이지만(콜론 포함) 위에서 처리되지 않은 경우
-      addLog('[정의되지 않은 메시지] $content', type: LogType.error);
+      // 기타 플래그 형식
+      addLog('[메시지] $content', type: LogType.received);
     } else {
-      // 일반 메시지 (채팅 등)
+      // 일반 텍스트
       addLog(content, type: LogType.received);
     }
   }
@@ -195,10 +216,7 @@ class AoaNotifier extends StateNotifier<AoaState> {
   }
 
   Future<void> sendMenuFile(String jsonContent) async {
-    // 크기가 크면 쪼개서 보냄 (청크 전송)
-    await sendMessage('FILE_SYNC_START');
-
-    // 8KB씩 쪼개서 전송하여 확실한 전달 도모
+    await sendMessage('FILE_START');
     const int chunkSize = 8192;
     int index = 0;
     while (index < jsonContent.length) {
@@ -206,23 +224,21 @@ class AoaNotifier extends StateNotifier<AoaState> {
       if (end > jsonContent.length) end = jsonContent.length;
       await sendMessage(jsonContent.substring(index, end));
       index = end;
-      // 너무 빠르면 네이티브 버퍼가 꼬일 수 있으므로 아주 짧은 지연
       await Future.delayed(const Duration(milliseconds: 50));
     }
-
-    await sendMessage('FILE_SYNC_END');
-  }
-
-  Future<void> sendOrderStatus(String status) async {
-    await sendMessage('ORDER_STATUS:$status');
+    await sendMessage('FILE_END');
   }
 
   Future<void> sendSelectItem(String itemName) async {
-    await sendMessage('SELECT_ITEM:$itemName');
+    await sendMessage('SELECT:$itemName');
   }
 
   Future<void> sendOrderPay(String orderDetail) async {
-    await sendMessage('ORDER_PAY:$orderDetail');
+    await sendMessage('PAY:$orderDetail');
+  }
+
+  Future<void> sendLockSignal(bool isBusy) async {
+    await sendMessage('LOCK:${isBusy ? "BUSY" : "FREE"}');
   }
 }
 

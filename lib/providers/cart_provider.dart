@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/m_drink.dart';
+import 'aoa_provider.dart';
 
 class CartItem {
   final DrinkModel drink;
@@ -60,10 +61,21 @@ class CartNotifier extends Notifier<CartState> {
   }
 
   void _updateState(List<CartItem> items) {
+    // 이전 상태와 비교하여 LOCK 신호 전송 여부 판단
+    final bool wasEmpty = state.items.isEmpty;
+    final bool isEmptyNow = items.isEmpty;
+
     int total = 0;
     for (var item in items) {
       total += (int.tryParse(item.drink.price) ?? 0) * item.quantity;
     }
     state = state.copyWith(items: items, totalPrice: total);
+
+    // 상태 변화에 따른 LOCK 신호 전송
+    if (wasEmpty && !isEmptyNow) {
+      ref.read(aoaProvider.notifier).sendLockSignal(true); // 장바구니가 채워짐
+    } else if (!wasEmpty && isEmptyNow) {
+      ref.read(aoaProvider.notifier).sendLockSignal(false); // 장바구니가 비워짐
+    }
   }
 }

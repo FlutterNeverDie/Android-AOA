@@ -21,7 +21,7 @@ class ModeSelectionScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text(
-                  'AOA 티타임',
+                  'AOA 프로토콜 모드 선택',
                   style: TextStyle(
                     fontSize: 40,
                     fontWeight: FontWeight.w900,
@@ -29,15 +29,7 @@ class ModeSelectionScreen extends ConsumerWidget {
                     color: Color(0xFF0F172A),
                   ),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  'NMP-10 통신 모드를 선택해주세요',
-                  style: TextStyle(
-                    color: const Color(0xFF64748B),
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 60),
+                const SizedBox(height: 80),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
