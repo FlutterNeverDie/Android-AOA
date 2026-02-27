@@ -196,6 +196,45 @@ class _DeviceModeScreenState extends ConsumerState<DeviceModeScreen> {
             ),
           ),
         ),
+        const SizedBox(height: 12),
+        ElevatedButton.icon(
+          icon: const Icon(Icons.ios_share_rounded),
+          label: const Text('Recipes.json 내보내기'),
+          onPressed: () async {
+            const path = '/storage/emulated/0/Download/Recipes.json';
+            final file = File(path);
+            if (await file.exists()) {
+              final content = await file.readAsString();
+              await notifier.sendMenuFile(content);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('다운로드 폴더의 Recipes.json을 전송했습니다.'),
+                  ),
+                );
+              }
+            } else {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Recipes.json 파일을 찾을 수 없습니다. (Download 폴더 확인)',
+                    ),
+                  ),
+                );
+              }
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFF59E0B).withValues(alpha: 0.08),
+            foregroundColor: const Color(0xFFF59E0B),
+            side: const BorderSide(color: Color(0xFFF59E0B)),
+            minimumSize: const Size(double.infinity, 56),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        ),
         const SizedBox(height: 32),
         const Text(
           '메시지 전송',
