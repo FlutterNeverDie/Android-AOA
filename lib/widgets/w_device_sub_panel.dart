@@ -71,14 +71,11 @@ class _WDeviceSubPanelState extends ConsumerState<WDeviceSubPanel> {
   /// 고정 경로 (/Download/Recipes.json)에서 파일을 읽어와 확인 후 동기화
   Future<void> _handleImportFromLocal(BuildContext context) async {
     try {
-      if (Platform.isAndroid) {
-        if (!await _requestPermissions()) return;
-      }
+      if (Platform.isAndroid && !await _requestPermissions()) return;
 
-      const path = '/storage/emulated/0/Download/Recipes.json';
-      final file = File(path);
+      final content = await ref.read(menuProvider.notifier).readFixedPathFile();
 
-      if (!await file.exists()) {
+      if (content == null) {
         if (mounted) {
           _showSnackBar(
             context,
@@ -87,11 +84,6 @@ class _WDeviceSubPanelState extends ConsumerState<WDeviceSubPanel> {
           );
         }
         return;
-      }
-
-      final content = await file.readAsString();
-      if (content.trim().isEmpty) {
-        throw Exception('파일 내용이 비어있습니다.');
       }
 
       if (mounted) {
@@ -111,9 +103,7 @@ class _WDeviceSubPanelState extends ConsumerState<WDeviceSubPanel> {
         );
       }
     } catch (e) {
-      if (mounted) {
-        _showSnackBar(context, '파일 읽기 오류: $e', isError: true);
-      }
+      if (mounted) _showSnackBar(context, '파일 읽기 오류: $e', isError: true);
     }
   }
 
@@ -128,41 +118,27 @@ class _WDeviceSubPanelState extends ConsumerState<WDeviceSubPanel> {
       final file = File(result.files.single.path!);
       final content = await file.readAsString();
       await widget.notifier.sendMenuFile(content);
-      if (mounted) {
-        _showSnackBar(context, '메뉴 파일이 상대 기기로 전송되었습니다.');
-      }
+      if (mounted) _showSnackBar(context, '메뉴 파일이 상대 기기로 전송되었습니다.');
     }
   }
 
   /// 지정된 경로(/Download/Recipes.json)의 파일을 읽어 호스트 기기로 전송
   Future<void> _handleSendFixedFileToHost(BuildContext context) async {
     try {
-      if (Platform.isAndroid) {
-        if (!await _requestPermissions()) return;
-      }
+      if (Platform.isAndroid && !await _requestPermissions()) return;
 
-      const path = '/storage/emulated/0/Download/Recipes.json';
-      final file = File(path);
+      final content = await ref.read(menuProvider.notifier).readFixedPathFile();
 
-      if (await file.exists()) {
-        final content = await file.readAsString();
-        if (content.trim().isEmpty) {
-          throw Exception('파일 내용이 비어있습니다.');
-        }
-
+      if (content != null) {
         await widget.notifier.sendMenuFile(content);
-        if (mounted) {
+        if (mounted)
           _showSnackBar(context, '지정 경로의 Recipes.json을 호스트로 전송했습니다.');
-        }
       } else {
-        if (mounted) {
-          _showSnackBar(context, '파일을 찾을 수 없습니다: $path', isError: true);
-        }
+        if (mounted)
+          _showSnackBar(context, '지정된 파일을 찾을 수 없습니다.', isError: true);
       }
     } catch (e) {
-      if (mounted) {
-        _showSnackBar(context, '파일 전송 실패: $e', isError: true);
-      }
+      if (mounted) _showSnackBar(context, '파일 전송 실패: $e', isError: true);
     }
   }
 

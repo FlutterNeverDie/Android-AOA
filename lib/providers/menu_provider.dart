@@ -4,58 +4,77 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/m_drink.dart';
 import '../repositories/repo_menu.dart';
 
+/// MenuRepository 주입을 위한 프로바이더
 final menuRepositoryProvider = Provider((ref) => MenuRepository());
 
-final menuProvider = NotifierProvider<MenuNotifier, List<DrinkModel>>(() {
-  return MenuNotifier();
-});
-
+/// 메뉴 상태(상품 리스트)를 관리하는 Notifier 클래스
+/// 로컬 DB처럼 작동하며, UI에 실시간으로 데이터 변화를 전달합니다.
 class MenuNotifier extends Notifier<List<DrinkModel>> {
   MenuRepository get _repository => ref.read(menuRepositoryProvider);
 
   @override
   List<DrinkModel> build() {
-    loadMenu();
+    // 앱이 구동될 때 자동으로 내부 저장소에서 마지막 동기화 데이터를 불러옵니다.
+    _initMenu();
     return [];
   }
 
-  /// 로컬 파일에서 메뉴 데이터를 불러옵니다.
-  Future<void> loadMenu() async {
-    final data = await _repository.loadMenuData();
+  /// 앱 내부에 저장된 메뉴 파일 로드 시도
+  Future<void> _initMenu() async {
+    final data = await _repository.loadFromInternal();
     if (data != null) {
-      try {
-        String sanitizedData = data.trim();
-        // JSON 마지막 요소 뒤에 불필요한 쉼표가 있는 경우 제거 (예: [{}, {},])
-        sanitizedData = sanitizedData.replaceAll(RegExp(r',\s*\]'), ']');
-
-        final List<dynamic> jsonList = jsonDecode(sanitizedData);
-        final newState = jsonList.map((e) => DrinkModel.fromJson(e)).toList();
-
-        state = newState;
-
-        // 성공 로그 (AOA 콘솔)
-        // ignore: avoid_manual_providers_as_extension_setters
-        // ref.read(aoaProvider.notifier).addLog('[시스템] 메뉴판 데이터 ${newState.length}건이 로드되었습니다.');
-      } catch (e) {
-        // 파싱 실패 시 상위 알림 (어려우면 print라도)
-        debugPrint('Menu Parse Error: $e');
-        state = [];
-      }
+      _applyJsonToState(data);
     }
   }
 
-  /// 새로운 JSON 데이터를 로컬에 저장하고 상태를 갱신합니다 (동기화).
+  /// 수신된 또는 읽어온 JSON 문자열을 파싱하여 실제 객체 리스트로 변환 후 상태 적용
+  bool _applyJsonToState(String jsonString) {
+    try {
+      String sanitizedData = jsonString.trim();
+      // 실수로 들어간 마지막 쉼표(Trailing Comma) 보정 로직
+      sanitizedData = sanitizedData.replaceAll(RegExp(r',\s*\]'), ']');
+
+      final List<dynamic> jsonList = jsonDecode(sanitizedData);
+      // JSON 데이터를 DrinkModel 객체 리스트로 매핑
+      final newState = jsonList.map((e) => DrinkModel.fromJson(e)).toList();
+
+      // UI에 변경 알림 전송
+      state = newState;
+      return true;
+    } catch (e) {
+      debugPrint('메뉴 파싱 실패: $e');
+      return false;
+    }
+  }
+
+  /// 안드로이드 다운로드 폴더(/Download/Recipes.json)에서 직접 고정 파일을 읽어옴
+  Future<String?> readFixedPathFile() async {
+    return await _repository.loadFromFixedPath();
+  }
+
+  /// 새로운 데이터 수신/불러오기 시: 내부 저장소에 저장(캐싱)한 뒤 상태 갱신
+  /// 다음에 앱을 켤 때 이 데이터를 자동으로 불러오게 됩니다.
   Future<bool> syncMenu(String jsonString) async {
-    final success = await _repository.saveMenuData(jsonString);
+    final success = await _repository.saveToInternal(jsonString);
     if (success) {
-      await loadMenu();
+      return _applyJsonToState(jsonString);
     }
-    return success;
+    return false;
   }
 
-  /// 메뉴 리스트를 초기화합니다.
+  /// 모든 메뉴 데이터 초기화 (내부 파일 삭제 및 UI 리스트 비우기)
   Future<void> clearMenu() async {
-    await _repository.deleteMenuData();
+    await _repository.deleteInternal();
     state = [];
   }
+
+  /// 현재 메모리에 로드된 메뉴 상태를 JSON 문자열로 변환 (파일 전송 시 사용)
+  String toJsonString() {
+    return jsonEncode(state.map((e) => e.toJson()).toList());
+  }
 }
+
+/// 전역적으로 메뉴 상태에 접근할 수 있는 프로바이더 정의
+final menuProvider = NotifierProvider<MenuNotifier, List<DrinkModel>>(() {
+  return MenuNotifier();
+});
