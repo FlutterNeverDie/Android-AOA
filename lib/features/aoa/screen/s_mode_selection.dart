@@ -6,6 +6,8 @@ import '../model/m_aoa_state.dart';
 import 's_host_mode.dart';
 import 's_device_mode.dart';
 
+import '../../../share/provider/theme_provider.dart';
+
 class ModeSelectionScreen extends ConsumerWidget {
   const ModeSelectionScreen({super.key});
 
@@ -13,21 +15,39 @@ class ModeSelectionScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
+    final theme = Theme.of(context);
+
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
-          _buildBackground(),
+          _buildBackground(isDark),
+          Positioned(
+            top: 40,
+            right: 40,
+            child: FloatingActionButton.small(
+              onPressed: () => ref.read(themeProvider.notifier).toggleTheme(),
+              backgroundColor: isDark
+                  ? const Color(0xFFD4A373)
+                  : const Color(0xFF2C1810),
+              foregroundColor: isDark ? const Color(0xFF2C1810) : Colors.white,
+              child: Icon(
+                isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+              ),
+            ),
+          ),
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  'AOA 프로토콜 모드 선 택',
+                Text(
+                  'AOA 프로토콜 모드 선택',
                   style: TextStyle(
                     fontSize: 40,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -1.5,
-                    color: Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
                   ),
                 ),
                 const SizedBox(height: 80),
@@ -36,6 +56,7 @@ class ModeSelectionScreen extends ConsumerWidget {
                   children: [
                     _buildModeCard(
                       context,
+                      isDark: isDark,
                       title: '호스트 모드',
                       subtitle: '액세서리 역할\n(USB 호스트)',
                       icon: Icons.settings_input_composite,
@@ -56,6 +77,7 @@ class ModeSelectionScreen extends ConsumerWidget {
                     const SizedBox(width: 32),
                     _buildModeCard(
                       context,
+                      isDark: isDark,
                       title: '디바이스 모드',
                       subtitle: '타겟 장치 역할\n(USB 디바이스)',
                       icon: Icons.android_rounded,
@@ -83,7 +105,7 @@ class ModeSelectionScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildBackground() {
+  Widget _buildBackground(bool isDark) {
     return Stack(
       children: [
         Positioned(
@@ -94,7 +116,9 @@ class ModeSelectionScreen extends ConsumerWidget {
             height: 500,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF6366F1).withValues(alpha: 0.08),
+              color:
+                  (isDark ? const Color(0xFF6366F1) : const Color(0xFF6366F1))
+                      .withValues(alpha: 0.08),
             ),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
@@ -110,7 +134,9 @@ class ModeSelectionScreen extends ConsumerWidget {
             height: 500,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFEC4899).withValues(alpha: 0.05),
+              color:
+                  (isDark ? const Color(0xFFD4A373) : const Color(0xFFEC4899))
+                      .withValues(alpha: 0.05),
             ),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
@@ -124,6 +150,7 @@ class ModeSelectionScreen extends ConsumerWidget {
 
   Widget _buildModeCard(
     BuildContext context, {
+    required bool isDark,
     required String title,
     required String subtitle,
     required IconData icon,
@@ -136,16 +163,19 @@ class ModeSelectionScreen extends ConsumerWidget {
         width: 280,
         height: 320,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
           borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: 0.1),
+              color: color.withValues(alpha: isDark ? 0.05 : 0.1),
               blurRadius: 40,
               offset: const Offset(0, 20),
             ),
           ],
-          border: Border.all(color: const Color(0xFFF1F5F9), width: 1),
+          border: Border.all(
+            color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
+            width: 1,
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.all(32.0),
@@ -163,18 +193,18 @@ class ModeSelectionScreen extends ConsumerWidget {
               const SizedBox(height: 32),
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
+                  color: isDark ? Colors.white70 : const Color(0xFF0F172A),
                 ),
               ),
               const SizedBox(height: 12),
               Text(
                 subtitle,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF64748B),
+                style: TextStyle(
+                  color: isDark ? Colors.white54 : const Color(0xFF64748B),
                   fontSize: 15,
                   height: 1.5,
                 ),

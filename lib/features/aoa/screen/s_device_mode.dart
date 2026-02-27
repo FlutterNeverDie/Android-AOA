@@ -6,6 +6,8 @@ import '../../../share/widget/w_glass_panel.dart';
 import '../widget/w_console_log.dart';
 import '../widget/w_device_control_panel.dart';
 import '../widget/w_device_sub_panel.dart';
+import '../../barista/screen/s_barista_dashboard.dart';
+import '../../../share/provider/theme_provider.dart';
 
 class DeviceModeScreen extends ConsumerStatefulWidget {
   const DeviceModeScreen({super.key});
@@ -103,9 +105,81 @@ class _DeviceModeScreenState extends ConsumerState<DeviceModeScreen> {
             color: Color(0xFF0F172A),
           ),
         ),
+        const SizedBox(width: 24),
+        // 바리스타 대시보드 버튼
+        _buildHeaderAction(
+          icon: Icons.dashboard_customize_rounded,
+          label: '바리스타 모드',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const BaristaDashboardScreen(),
+                settings: const RouteSettings(
+                  name: BaristaDashboardScreen.routeName,
+                ),
+              ),
+            );
+          },
+          color: const Color(0xFFD4A373),
+        ),
+        const SizedBox(width: 12),
+        // 테마 전환 버튼
+        Consumer(
+          builder: (context, ref, child) {
+            final isDark = ref.watch(themeProvider) == ThemeMode.dark;
+            return _buildHeaderAction(
+              icon: isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+              label: isDark ? '라이트 모드' : '다크 모드',
+              onPressed: () => ref.read(themeProvider.notifier).toggleTheme(),
+              color: const Color(0xFF2C1810),
+            );
+          },
+        ),
         const Spacer(),
         _buildStatusBar(),
       ],
+    );
+  }
+
+  Widget _buildHeaderAction({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+    required Color color,
+  }) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF475569),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

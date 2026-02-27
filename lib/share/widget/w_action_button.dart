@@ -20,7 +20,6 @@ class WActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 56,
       child: ElevatedButton.icon(
         icon: Icon(icon, size: 20),
         label: Text(label),

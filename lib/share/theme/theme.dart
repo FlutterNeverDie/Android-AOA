@@ -55,4 +55,51 @@ class AppTheme {
       ),
     );
   }
+
+  static ThemeData get darkTheme {
+    return ThemeData(
+      brightness: Brightness.dark,
+      primaryColor: accentColor,
+      scaffoldBackgroundColor: const Color(0xFF0F172A), // Slate 900
+      fontFamily: 'Inter',
+      colorScheme: const ColorScheme.dark(
+        primary: accentColor,
+        secondary: primaryColor,
+        error: secondaryColor,
+        surface: Color(0xFF1E293B), // Slate 800
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: accentColor,
+          foregroundColor: primaryColor,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+      textTheme: const TextTheme(
+        headlineMedium: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w900,
+          letterSpacing: -0.5,
+        ),
+        titleLarge: TextStyle(
+          color: accentColor,
+          fontWeight: FontWeight.bold,
+          fontSize: 22,
+        ),
+        bodyMedium: TextStyle(
+          color: Color(0xFF94A3B8), // Slate 400
+          fontSize: 16,
+        ),
+      ),
+    );
+  }
 }
