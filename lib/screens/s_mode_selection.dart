@@ -21,7 +21,7 @@ class ModeSelectionScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text(
-                  'AOA 프로토콜 모드 선택',
+                  'AOA 프로토콜 모드 선 택', 
                   style: TextStyle(
                     fontSize: 40,
                     fontWeight: FontWeight.w900,

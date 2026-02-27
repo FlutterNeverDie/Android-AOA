@@ -15,14 +15,24 @@ class WMenuAppBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // 왼쪽: 시간
-          Text(
-            DateFormat('HH:mm').format(DateTime.now()),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+          // 왼쪽: 홈 버튼 + 시간
+          Row(
+            children: [
+              IconButton(
+                onPressed: () => Navigator.maybePop(context),
+                icon: const Icon(Icons.home_rounded, color: Colors.white70),
+                tooltip: '관리 화면으로 돌아가기',
+              ),
+              const SizedBox(width: 8),
+              Text(
+                DateFormat('HH:mm').format(DateTime.now()),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
 
           // 중앙: 로고 및 타이틀

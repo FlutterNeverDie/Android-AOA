@@ -4,17 +4,22 @@ import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../providers/aoa_provider.dart';
 import '../models/m_aoa.dart';
+import '../providers/menu_provider.dart';
+import '../screens/s_menu_board.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
-class WDeviceControlPanel extends StatefulWidget {
+class WDeviceControlPanel extends ConsumerStatefulWidget {
   final AoaNotifier notifier;
 
   const WDeviceControlPanel({super.key, required this.notifier});
 
   @override
-  State<WDeviceControlPanel> createState() => _WDeviceControlPanelState();
+  ConsumerState<WDeviceControlPanel> createState() =>
+      _WDeviceControlPanelState();
 }
 
-class _WDeviceControlPanelState extends State<WDeviceControlPanel> {
+class _WDeviceControlPanelState extends ConsumerState<WDeviceControlPanel> {
   final TextEditingController _messageController = TextEditingController();
 
   @override
@@ -55,7 +60,20 @@ class _WDeviceControlPanelState extends State<WDeviceControlPanel> {
               ),
             ),
           ),
-          const SizedBox(height: 32),
+          _buildActionButton(
+            label: '메뉴판 화면 이동',
+            icon: Icons.grid_view_rounded,
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const MenuBoardScreen(),
+                settings: const RouteSettings(name: MenuBoardScreen.routeName),
+              ),
+            ),
+            color: const Color(0xFFF43F5E), // Rose color
+            isPrimary: true,
+          ),
+          const SizedBox(height: 12),
           _buildActionButton(
             label: '통신 채널 연결',
             icon: Icons.sync_rounded,
@@ -76,6 +94,17 @@ class _WDeviceControlPanelState extends State<WDeviceControlPanel> {
             onPressed: () => _handleExportRecipes(context),
             color: const Color(0xFFF59E0B),
           ),
+          const SizedBox(height: 32),
+          const Text(
+            '수신된 메뉴 데이터 (동기화)',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildPendingFilesList(),
           const SizedBox(height: 32),
           const Text(
             '메시지 전송',
@@ -217,6 +246,187 @@ class _WDeviceControlPanelState extends State<WDeviceControlPanel> {
               : BorderSide(color: color.withValues(alpha: 0.2)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPendingFilesList() {
+    final state = ref.watch(aoaProvider);
+    if (state.pendingFiles.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFF1F5F9)),
+        ),
+        child: const Text(
+          '수신된 메뉴 파일이 없습니다.',
+          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: state.pendingFiles.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        final file = state.pendingFiles[index];
+        final timeStr = DateFormat('HH:mm:ss').format(file.receivedAt);
+        return InkWell(
+          onTap: () => _showSyncDialog(context, index, file),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.description_rounded,
+                  size: 16,
+                  color: Color(0xFF6366F1),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '수신됨 [$timeStr]',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.sync_alt_rounded,
+                  size: 16,
+                  color: Color(0xFF94A3B8),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showSyncDialog(BuildContext context, int index, dynamic file) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('메뉴 데이터 동기화'),
+        content: const Text('수신된 데이터로 메뉴판을 업데이트하시겠습니까?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소', style: TextStyle(color: Color(0xFF64748B))),
+          ),
+          TextButton(
+            onPressed: () => _showJsonViewer(context, file.content),
+            child: const Text(
+              'JSON 확인',
+              style: TextStyle(color: Color(0xFF6366F1)),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final success = await ref
+                  .read(menuProvider.notifier)
+                  .syncMenu(file.content);
+              if (success) {
+                widget.notifier.removePendingFile(index);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('메뉴 동기화 완료!')));
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6366F1),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('동기화'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showJsonViewer(BuildContext context, String json) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.8,
+          height: MediaQuery.of(context).size.height * 0.8,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'JSON 원본 데이터',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const Divider(height: 32),
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: SingleChildScrollView(
+                    child: SelectableText(
+                      json,
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 12,
+                        color: Color(0xFFE2E8F0),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6366F1),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    '닫기',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
