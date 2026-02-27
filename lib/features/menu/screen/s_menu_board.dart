@@ -7,6 +7,7 @@ import '../widget/w_menu_sidebar.dart';
 import '../widget/w_menu_grid.dart';
 import '../widget/w_menu_empty_state.dart';
 import '../widget/w_menu_lock_overlay.dart';
+import '../../../share/provider/theme_provider.dart';
 
 /// 메인 메뉴판 화면
 /// 상단바, 메뉴 그리드, 우측 장바구니로 구성되며 상대방 기기의 잠금 상태를 감시합니다.
@@ -20,9 +21,10 @@ class MenuBoardScreen extends ConsumerWidget {
     // 메뉴 데이터 및 통신 상태 관찰
     final menuList = ref.watch(menuProvider);
     final aoaState = ref.watch(aoaProvider);
+    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
       body: Stack(
         children: [
           Column(
@@ -44,9 +46,11 @@ class MenuBoardScreen extends ConsumerWidget {
                       Expanded(
                         flex: 3,
                         child: Container(
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFF1F5F9), // 부드러운 배경색
-                            borderRadius: BorderRadius.only(
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? const Color(0xFF1E293B)
+                                : const Color(0xFFF1F5F9), // 부드러운 배경색
+                            borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(20),
                               bottomLeft: Radius.circular(20),
                             ),

@@ -27,18 +27,19 @@ class WHostSubPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
+          Text(
             '수신된 메뉴 데이터',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF0F172A),
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
             ),
           ),
           const SizedBox(height: 12),
@@ -60,12 +61,12 @@ class WHostSubPanel extends ConsumerWidget {
             padding: EdgeInsets.symmetric(vertical: 20),
             child: Divider(height: 1),
           ),
-          const Text(
+          Text(
             '설정 및 도구',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF64748B),
+              color: isDark ? Colors.white70 : const Color(0xFF64748B),
             ),
           ),
           const SizedBox(height: 12),
@@ -124,9 +125,10 @@ class WHostSubPanel extends ConsumerWidget {
     int index,
     PendingMenuFile file,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final timeStr = DateFormat('yyyy-MM-dd HH:mm:ss').format(file.receivedAt);
     return Material(
-      color: Colors.white,
+      color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: () => _showSyncConfirmation(context, ref, index, file),
@@ -135,7 +137,9 @@ class WHostSubPanel extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(
+              color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+            ),
           ),
           child: Row(
             children: [
@@ -156,20 +160,22 @@ class WHostSubPanel extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       '메뉴 데이터 수신',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E293B),
+                        color: isDark ? Colors.white : const Color(0xFF1E293B),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       timeStr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF64748B),
+                        color: isDark
+                            ? Colors.white60
+                            : const Color(0xFF64748B),
                       ),
                     ),
                   ],

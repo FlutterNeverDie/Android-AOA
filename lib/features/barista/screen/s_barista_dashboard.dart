@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../provider/barista_provider.dart';
 import '../model/m_order.dart';
+import '../../../share/provider/theme_provider.dart';
 
 class BaristaDashboardScreen extends ConsumerWidget {
   static const routeName = 's_barista_dashboard';
@@ -42,66 +43,229 @@ class BaristaDashboardScreen extends ConsumerWidget {
               isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
               color: isDark ? const Color(0xFFD4A373) : const Color(0xFF2C1810),
             ),
-            onPressed: () {
-              // 여기서 테마 토글 기능을 넣을 수 있습니다 (선택사항)
-            },
+            onPressed: () => ref.read(themeProvider.notifier).toggleTheme(),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 16),
         ],
       ),
-      body: Row(
-        children: [
-          // 왼쪽: 통계 및 요약 (사이드바 스타일)
-          _buildSummarySidebar(context, orders),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // 화면 너비가 800px 이하인 경우 세로 배치, 이상이면 가로 배치
+          final isNarrow = constraints.maxWidth < 800;
 
-          // 오른쪽: 실시간 주문 카드 목록
+          if (isNarrow) {
+            return Column(
+              children: [
+                _buildSummaryHeader(context, orders),
+                Expanded(child: _buildOrderGrid(context, ref, orders)),
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              // 왼쪽: 통계 및 요약 (사이드바 스타일)
+              _buildSummarySidebar(context, orders),
+
+              // 오른쪽: 실시간 주문 카드 목록
+              Expanded(child: _buildOrderGrid(context, ref, orders)),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// 좁은 화면에서의 상단 요약 바
+  Widget _buildSummaryHeader(BuildContext context, List<MOrder> orders) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pendingCount = orders
+        .where((o) => o.status == OrderStatus.pending)
+        .length;
+    final preparingCount = orders
+        .where((o) => o.status == OrderStatus.preparing)
+        .length;
+    final completedCount = orders
+        .where((o) => o.status == OrderStatus.completed)
+        .length;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark
+                ? Colors.white10
+                : Colors.black.withValues(alpha: 0.05),
+          ),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildStatItemMini('대기', pendingCount, Colors.orange),
+          _buildStatItemMini('제조', preparingCount, Colors.blue),
+          _buildStatItemMini('완료', completedCount, Colors.green),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItemMini(String label, int count, Color color) {
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '$count',
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+        ),
+      ],
+    );
+  }
+
+  /// 공통 주문 그리드 영역
+  Widget _buildOrderGrid(
+    BuildContext context,
+    WidgetRef ref,
+    List<MOrder> orders,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.bolt_rounded, color: Color(0xFFD4A373)),
+              const SizedBox(width: 8),
+              const Text(
+                '실시간 주문 현황',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '총 ${orders.length}개의 주문',
+                style: const TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        '실시간 주문 현황',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -0.5,
+            child: orders.isEmpty
+                ? _buildEmptyState()
+                : GridView.builder(
+                    gridDelegate:
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 400,
+                          mainAxisSpacing: 20,
+                          crossAxisSpacing: 20,
+                          mainAxisExtent: 220,
                         ),
-                      ),
-                      Text(
-                        '총 ${orders.length}건',
-                        style: const TextStyle(
-                          color: Color(0xFF64748B),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+                    itemCount: orders.length,
+                    itemBuilder: (context, index) {
+                      return _buildOrderCard(context, ref, orders[index]);
+                    },
                   ),
-                  const SizedBox(height: 24),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummarySidebar(BuildContext context, List<MOrder> orders) {
+    final pendingCount = orders
+        .where((o) => o.status == OrderStatus.pending)
+        .length;
+    final preparingCount = orders
+        .where((o) => o.status == OrderStatus.preparing)
+        .length;
+    final completedCount = orders
+        .where((o) => o.status == OrderStatus.completed)
+        .length;
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      width: 300,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        border: Border(
+          right: BorderSide(
+            color: isDark
+                ? Colors.white10
+                : Colors.black.withValues(alpha: 0.05),
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '오늘의 성과',
+                  style: TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  '힘내세요, 바리스타님!',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 32),
+                _buildStatItem('대기 중', pendingCount, Colors.orange),
+                const SizedBox(height: 16),
+                _buildStatItem('제조 중', preparingCount, Colors.blue),
+                const SizedBox(height: 16),
+                _buildStatItem('완료됨', completedCount, Colors.green),
+              ],
+            ),
+          ),
+          const Spacer(),
+          Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFD4A373).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Row(
+                children: [
+                  Icon(
+                    Icons.tips_and_updates_rounded,
+                    color: Color(0xFFD4A373),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: orders.isEmpty
-                        ? _buildEmptyState(context)
-                        : GridView.builder(
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  childAspectRatio: 1.4,
-                                  crossAxisSpacing: 20,
-                                  mainAxisSpacing: 20,
-                                ),
-                            itemCount: orders.length,
-                            itemBuilder: (context, index) {
-                              return _buildOrderCard(
-                                context,
-                                ref,
-                                orders[index],
-                              );
-                            },
-                          ),
+                    child: Text(
+                      '주문 수락 후 제조를 시작하세요.',
+                      style: TextStyle(
+                        color: Color(0xFF78350F),
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -112,91 +276,23 @@ class BaristaDashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSummarySidebar(BuildContext context, List<MOrder> orders) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Container(
-      width: 300,
-      color: isDark ? const Color(0xFF1E293B) : Colors.white,
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildStatItem(
-            '대기 중',
-            orders
-                .where((o) => o.status == OrderStatus.pending)
-                .length
-                .toString(),
-            Colors.orange,
-          ),
-          const SizedBox(height: 32),
-          _buildStatItem(
-            '준비 중',
-            orders
-                .where((o) => o.status == OrderStatus.preparing)
-                .length
-                .toString(),
-            Colors.blue,
-          ),
-          const SizedBox(height: 32),
-          _buildStatItem(
-            '완료됨',
-            orders
-                .where((o) => o.status == OrderStatus.completed)
-                .length
-                .toString(),
-            Colors.green,
-          ),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFFD4A373).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Column(
-              children: [
-                Icon(Icons.info_outline, color: Color(0xFFD4A373)),
-                SizedBox(height: 12),
-                Text(
-                  '새로운 주문이 들어오면\n목록이 자동으로 갱신됩니다.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF64748B),
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String title, String count, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildStatItem(String label, int count, Color color) {
+    return Row(
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            color: Color(0xFF64748B),
-            fontWeight: FontWeight.w600,
-          ),
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(width: 12),
         Text(
-          count,
-          style: TextStyle(
-            fontSize: 48,
-            fontWeight: FontWeight.w900,
-            color: color,
-          ),
+          label,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        ),
+        const Spacer(),
+        Text(
+          '$count',
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
         ),
       ],
     );
@@ -206,13 +302,15 @@ class BaristaDashboardScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF334155) : Colors.white,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -221,68 +319,58 @@ class BaristaDashboardScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                DateFormat('HH:mm').format(order.orderedAt),
-                style: const TextStyle(
-                  color: Color(0xFF94A3B8),
-                  fontWeight: FontWeight.w600,
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Row(
+              children: [
+                Text(
+                  DateFormat('HH:mm').format(order.orderedAt),
+                  style: const TextStyle(
+                    color: Color(0xFF94A3B8),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              _buildStatusBadge(order.status),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: Text(
-              order.menuName,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                height: 1.3,
-              ),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 2,
+                const Spacer(),
+                _buildStatusBadge(order.status),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              if (order.status == OrderStatus.pending)
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => ref
-                        .read(baristaProvider.notifier)
-                        .updateOrderStatus(order.id, OrderStatus.preparing),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: const Text(
-                      '수락',
-                      style: TextStyle(color: Colors.white),
-                    ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Text(
+                order.menuName,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white10 : const Color(0xFFF8FAFC),
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(24),
+              ),
+            ),
+            child: Row(
+              children: [
+                Text(
+                  '${NumberFormat('#,###').format(order.totalPrice)}원',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFD4A373),
                   ),
                 ),
-              if (order.status == OrderStatus.preparing)
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => ref
-                        .read(baristaProvider.notifier)
-                        .updateOrderStatus(order.id, OrderStatus.completed),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: const Text(
-                      '완료',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
-            ],
+                const Spacer(),
+                _buildActionButtons(ref, order),
+              ],
+            ),
           ),
         ],
       ),
@@ -299,7 +387,7 @@ class BaristaDashboardScreen extends ConsumerWidget {
         break;
       case OrderStatus.preparing:
         color = Colors.blue;
-        text = '준비 중';
+        text = '준비';
         break;
       case OrderStatus.completed:
         color = Colors.green;
@@ -314,7 +402,7 @@ class BaristaDashboardScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -328,7 +416,42 @@ class BaristaDashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
+  Widget _buildActionButtons(WidgetRef ref, MOrder order) {
+    if (order.status == OrderStatus.pending) {
+      return ElevatedButton(
+        onPressed: () => ref
+            .read(baristaProvider.notifier)
+            .updateOrderStatus(order.id, OrderStatus.preparing),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF2C1810),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: const Text('수락'),
+      );
+    } else if (order.status == OrderStatus.preparing) {
+      return ElevatedButton(
+        onPressed: () => ref
+            .read(baristaProvider.notifier)
+            .updateOrderStatus(order.id, OrderStatus.completed),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF10B981),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: const Text('완료'),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildEmptyState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -336,15 +459,15 @@ class BaristaDashboardScreen extends ConsumerWidget {
           Icon(
             Icons.coffee_rounded,
             size: 80,
-            color: const Color(0xFF64748B).withOpacity(0.2),
+            color: Colors.grey.withValues(alpha: 0.2),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           const Text(
-            '아직 들어온 주문이 없습니다',
+            '현재 들어온 주문이 없습니다.',
             style: TextStyle(
               fontSize: 18,
-              color: Color(0xFF64748B),
-              fontWeight: FontWeight.w600,
+              color: Colors.grey,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],

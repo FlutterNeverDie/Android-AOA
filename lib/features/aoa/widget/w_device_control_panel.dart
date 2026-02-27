@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../provider/aoa_provider.dart';
-import '../../menu/screen/s_menu_board.dart';
 import '../../../share/widget/w_action_button.dart';
 
 class WDeviceControlPanel extends ConsumerStatefulWidget {
@@ -56,20 +55,6 @@ class _WDeviceControlPanelState extends ConsumerState<WDeviceControlPanel> {
             ),
           ),
           const SizedBox(height: 24),
-          WActionButton(
-            label: '메뉴판 화면 이동',
-            icon: Icons.grid_view_rounded,
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const MenuBoardScreen(),
-                settings: const RouteSettings(name: MenuBoardScreen.routeName),
-              ),
-            ),
-            color: const Color(0xFFF43F5E),
-            isPrimary: true,
-          ),
-          const SizedBox(height: 12),
           WActionButton(
             label: '통신 채널 연결',
             icon: Icons.sync_rounded,

@@ -6,6 +6,9 @@ import '../model/m_order.dart';
 class BaristaNotifier extends Notifier<List<MOrder>> {
   @override
   List<MOrder> build() {
+    // 앱이 실행되는 동안 계속 주문을 수집하도록 설정
+    ref.keepAlive();
+
     // aoaProvider의 로그를 감시하여 주문 메시지가 오면 주문 목록에 추가
     ref.listen(aoaProvider, (previous, next) {
       if (next.logs.length > (previous?.logs.length ?? 0)) {
@@ -23,11 +26,32 @@ class BaristaNotifier extends Notifier<List<MOrder>> {
     // 로그 예시: "[결제] [아메리카노(HOT) x1] 총 1,900원"
     final cleanMsg = logMsg.replaceFirst('[결제]', '').trim();
 
-    // 간단한 파싱 logic (정교한 파싱은 실제 데이터 형식에 맞춰 보완 가능)
+    // 가격 추출 시도 (가장 뒤의 '총 X원' 패턴 찾기)
+    int price = 0;
+    String nameOnly = cleanMsg;
+
+    try {
+      // '총' 키워드를 기준으로 나눔
+      if (cleanMsg.contains('총')) {
+        final parts = cleanMsg.split('총');
+        // '총' 앞부분은 메뉴 정보
+        nameOnly = parts.first.replaceAll('[', '').replaceAll(']', '').trim();
+        // '총' 뒷부분에서 숫자만 추출
+        final priceString = parts.last
+            .replaceAll(',', '')
+            .replaceAll(RegExp(r'[^0-9]'), '');
+        if (priceString.isNotEmpty) {
+          price = int.parse(priceString);
+        }
+      }
+    } catch (e) {
+      // 파싱 실패 시 기본값 0 유지
+    }
+
     final order = MOrder(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      menuName: cleanMsg, // 전체 메시지를 메뉴 정보로 저장
-      totalPrice: 0, // 상세 가격 파싱은 생략 (데모용)
+      menuName: nameOnly,
+      totalPrice: price,
       orderedAt: DateTime.now(),
     );
 

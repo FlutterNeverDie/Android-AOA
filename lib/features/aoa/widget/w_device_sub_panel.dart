@@ -20,17 +20,18 @@ class WDeviceSubPanel extends ConsumerStatefulWidget {
 class _WDeviceSubPanelState extends ConsumerState<WDeviceSubPanel> {
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             '메뉴 데이터 관리',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF0F172A),
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
             ),
           ),
           const SizedBox(height: 24),
@@ -41,12 +42,12 @@ class _WDeviceSubPanelState extends ConsumerState<WDeviceSubPanel> {
             color: const Color(0xFF6366F1),
           ),
           const SizedBox(height: 40),
-          const Text(
+          Text(
             '파일 전송 및 백업',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF64748B),
+              color: isDark ? Colors.white70 : const Color(0xFF64748B),
             ),
           ),
           const SizedBox(height: 12),

@@ -8,6 +8,7 @@ import '../widget/w_console_log.dart';
 import '../widget/w_host_sub_panel.dart';
 import '../../menu/screen/s_menu_board.dart';
 import '../../barista/screen/s_barista_dashboard.dart';
+import '../../barista/screen/s_order_history.dart';
 import '../../../share/provider/theme_provider.dart';
 
 class HostModeScreen extends ConsumerStatefulWidget {
@@ -107,30 +108,33 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
     return Row(
       children: [
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(
+              color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+            ),
           ),
           child: IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back_ios_new_rounded,
               size: 20,
-              color: Color(0xFF64748B),
+              color: isDark ? Colors.white70 : const Color(0xFF64748B),
             ),
             onPressed: () => Navigator.pop(context),
           ),
         ),
         const SizedBox(width: 16),
-        const Text(
+        Text(
           '호스트 모드 설정',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF0F172A),
+            color: isDark ? Colors.white : const Color(0xFF0F172A),
           ),
         ),
         const SizedBox(width: 24),
@@ -152,17 +156,46 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
           color: const Color(0xFFD4A373),
         ),
         const SizedBox(width: 12),
-        // 테마 전환 버튼
-        Consumer(
-          builder: (context, ref, child) {
-            final isDark = ref.watch(themeProvider) == ThemeMode.dark;
-            return _buildHeaderAction(
-              icon: isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-              label: isDark ? '라이트 모드' : '다크 모드',
-              onPressed: () => ref.read(themeProvider.notifier).toggleTheme(),
-              color: const Color(0xFF2C1810),
+        // 주문 내역 버튼
+        _buildHeaderAction(
+          icon: Icons.history_rounded,
+          label: '주문 내역',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const OrderHistoryScreen(),
+                settings: const RouteSettings(
+                  name: OrderHistoryScreen.routeName,
+                ),
+              ),
             );
           },
+          color: const Color(0xFF10B981),
+        ),
+        const SizedBox(width: 12),
+        // 메뉴판 버튼 추가
+        _buildHeaderAction(
+          icon: Icons.grid_view_rounded,
+          label: '메뉴판',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const MenuBoardScreen(),
+                settings: const RouteSettings(name: MenuBoardScreen.routeName),
+              ),
+            );
+          },
+          color: const Color(0xFFF43F5E),
+        ),
+        const SizedBox(width: 12),
+        // 테마 전환 버튼
+        _buildHeaderAction(
+          icon: isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+          label: isDark ? '라이트 모드' : '다크 모드',
+          onPressed: () => ref.read(themeProvider.notifier).toggleTheme(),
+          color: isDark ? const Color(0xFFD4A373) : const Color(0xFF2C1810),
         ),
         const Spacer(),
         _buildStatusBar(),
@@ -176,18 +209,21 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
     required VoidCallback onPressed,
     required Color color,
   }) {
+    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(
+            color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
+              color: Colors.black.withValues(alpha: isDark ? 0.1 : 0.02),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -199,10 +235,10 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
             const SizedBox(width: 8),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF475569),
+                color: isDark ? Colors.white70 : const Color(0xFF475569),
               ),
             ),
           ],
@@ -212,16 +248,19 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
   }
 
   Widget _buildStatusBar() {
+    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
     final isConnected = ref.watch(aoaProvider).isConnected;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(
+          color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withValues(alpha: isDark ? 0.1 : 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -242,10 +281,10 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
           const SizedBox(width: 10),
           Text(
             isConnected ? '채널 활성화됨' : '연결 끊김',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF475569),
+              color: isDark ? Colors.white70 : const Color(0xFF475569),
             ),
           ),
         ],
@@ -254,15 +293,16 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
   }
 
   Widget _buildLeftPanel(AoaState state, AoaNotifier notifier) {
+    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'AOA 제어 및 전송',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF0F172A),
+            color: isDark ? Colors.white : const Color(0xFF0F172A),
           ),
         ),
         const SizedBox(height: 20),
@@ -320,20 +360,6 @@ class _HostModeScreenState extends ConsumerState<HostModeScreen> {
           },
         ),
         const SizedBox(height: 12),
-        _buildActionButton(
-          label: '메뉴판 보기',
-          icon: Icons.grid_view_rounded,
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const MenuBoardScreen(),
-                settings: const RouteSettings(name: MenuBoardScreen.routeName),
-              ),
-            );
-          },
-          color: const Color(0xFFEC4899),
-        ),
       ],
     );
   }

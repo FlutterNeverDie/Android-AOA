@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../provider/cart_provider.dart';
 import '../../aoa/provider/aoa_provider.dart';
+import '../../../share/provider/theme_provider.dart';
 
 class WMenuSidebar extends ConsumerWidget {
   const WMenuSidebar({super.key});
@@ -11,30 +12,35 @@ class WMenuSidebar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cart = ref.watch(cartProvider);
     final cartNotifier = ref.read(cartProvider.notifier);
+    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
 
     return Container(
       width: 380, // 너비를 조금 더 넓힘
-      color: const Color(0xFFF1F5F9).withOpacity(0.5), // 더 투명하고 부드러운 배경
+      color: isDark
+          ? Colors.black.withValues(alpha: 0.2)
+          : const Color(0xFFF1F5F9).withValues(alpha: 0.5), // 더 투명하고 부드러운 배경
       child: Column(
         children: [
           // 장바구니 타이틀
           Container(
             padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
-            color: Colors.white,
-            child: const Row(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            child: Row(
               children: [
                 Icon(
                   Icons.shopping_bag_outlined,
-                  color: Color(0xFF2C1810),
+                  color: isDark
+                      ? const Color(0xFFD4A373)
+                      : const Color(0xFF2C1810),
                   size: 32,
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Text(
                   '주문 내역',
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w900,
-                    color: Color(0xFF2C1810),
+                    color: isDark ? Colors.white : const Color(0xFF2C1810),
                     letterSpacing: 1,
                   ),
                 ),
@@ -47,11 +53,11 @@ class WMenuSidebar extends ConsumerWidget {
             child: Container(
               margin: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
                     blurRadius: 20,
                     offset: const Offset(0, 4),
                   ),
@@ -65,12 +71,17 @@ class WMenuSidebar extends ConsumerWidget {
                           Icon(
                             Icons.coffee_maker_outlined,
                             size: 64,
-                            color: Colors.grey.shade300,
+                            color: isDark
+                                ? Colors.white10
+                                : Colors.grey.shade300,
                           ),
                           const SizedBox(height: 16),
-                          const Text(
+                          Text(
                             '주문을 시작해 보세요',
-                            style: TextStyle(color: Colors.grey, fontSize: 16),
+                            style: TextStyle(
+                              color: isDark ? Colors.white30 : Colors.grey,
+                              fontSize: 16,
+                            ),
                           ),
                         ],
                       ),
@@ -80,7 +91,7 @@ class WMenuSidebar extends ConsumerWidget {
                       itemCount: cart.items.length,
                       separatorBuilder: (context, index) => Divider(
                         height: 1,
-                        color: Colors.grey.shade100,
+                        color: isDark ? Colors.white10 : Colors.grey.shade100,
                         indent: 24,
                         endIndent: 24,
                       ),
@@ -99,7 +110,7 @@ class WMenuSidebar extends ConsumerWidget {
                                 height: 40,
                                 decoration: BoxDecoration(
                                   color: (isHot ? Colors.red : Colors.blue)
-                                      .withOpacity(0.1),
+                                      .withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Center(
@@ -119,16 +130,20 @@ class WMenuSidebar extends ConsumerWidget {
                                   children: [
                                     Text(
                                       item.drink.name,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.w700,
                                         fontSize: 16,
-                                        color: Color(0xFF1E293B),
+                                        color: isDark
+                                            ? Colors.white
+                                            : const Color(0xFF1E293B),
                                       ),
                                     ),
                                     Text(
                                       '₩${NumberFormat('#,###').format(int.tryParse(item.drink.price) ?? 0)}',
                                       style: TextStyle(
-                                        color: Colors.grey.shade500,
+                                        color: isDark
+                                            ? Colors.white70
+                                            : Colors.grey.shade500,
                                         fontSize: 14,
                                       ),
                                     ),
@@ -139,10 +154,12 @@ class WMenuSidebar extends ConsumerWidget {
                                 children: [
                                   Text(
                                     '${item.quantity}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w900,
                                       fontSize: 18,
-                                      color: Color(0xFF2C1810),
+                                      color: isDark
+                                          ? const Color(0xFFD4A373)
+                                          : const Color(0xFF2C1810),
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -169,10 +186,10 @@ class WMenuSidebar extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
                   blurRadius: 20,
                   offset: const Offset(0, -5),
                 ),
@@ -194,10 +211,10 @@ class WMenuSidebar extends ConsumerWidget {
                     ),
                     Text(
                       '₩${NumberFormat('#,###').format(cart.totalPrice)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFF2C1810),
+                        color: isDark ? Colors.white : const Color(0xFF2C1810),
                       ),
                     ),
                   ],
@@ -233,11 +250,15 @@ class WMenuSidebar extends ConsumerWidget {
                                   width: 440,
                                   padding: const EdgeInsets.all(48),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: isDark
+                                        ? const Color(0xFF1E293B)
+                                        : Colors.white,
                                     borderRadius: BorderRadius.circular(40),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
+                                        color: Colors.black.withValues(
+                                          alpha: isDark ? 0.2 : 0.1,
+                                        ),
                                         blurRadius: 30,
                                         offset: const Offset(0, 15),
                                       ),
@@ -251,7 +272,7 @@ class WMenuSidebar extends ConsumerWidget {
                                         decoration: BoxDecoration(
                                           color: const Color(
                                             0xFFD4A373,
-                                          ).withOpacity(0.1),
+                                          ).withValues(alpha: 0.1),
                                           shape: BoxShape.circle,
                                         ),
                                         child: const Icon(
@@ -261,22 +282,26 @@ class WMenuSidebar extends ConsumerWidget {
                                         ),
                                       ),
                                       const SizedBox(height: 32),
-                                      const Text(
+                                      Text(
                                         '주문 완료',
                                         style: TextStyle(
                                           fontSize: 32,
                                           fontWeight: FontWeight.w900,
-                                          color: Color(0xFF2C1810),
+                                          color: isDark
+                                              ? Colors.white
+                                              : const Color(0xFF2C1810),
                                           letterSpacing: -1,
                                         ),
                                       ),
                                       const SizedBox(height: 12),
-                                      const Text(
+                                      Text(
                                         '맛있게 준비해 드릴게요!\n잠시만 기다려 주세요.',
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                           fontSize: 18,
-                                          color: Color(0xFF64748B),
+                                          color: isDark
+                                              ? Colors.white70
+                                              : const Color(0xFF64748B),
                                           height: 1.5,
                                         ),
                                       ),
@@ -288,20 +313,22 @@ class WMenuSidebar extends ConsumerWidget {
                                           onPressed: () =>
                                               Navigator.pop(context),
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(
-                                              0xFF2C1810,
-                                            ),
+                                            backgroundColor: isDark
+                                                ? const Color(0xFFD4A373)
+                                                : const Color(0xFF2C1810),
                                             shape: RoundedRectangleBorder(
                                               borderRadius:
                                                   BorderRadius.circular(20),
                                             ),
                                           ),
-                                          child: const Text(
+                                          child: Text(
                                             '확인',
                                             style: TextStyle(
                                               fontSize: 20,
                                               fontWeight: FontWeight.bold,
-                                              color: Colors.white,
+                                              color: isDark
+                                                  ? Colors.black
+                                                  : Colors.white,
                                             ),
                                           ),
                                         ),
@@ -313,8 +340,12 @@ class WMenuSidebar extends ConsumerWidget {
                             );
                           },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2C1810),
-                      foregroundColor: const Color(0xFFD4A373),
+                      backgroundColor: isDark
+                          ? const Color(0xFFD4A373)
+                          : const Color(0xFF2C1810),
+                      foregroundColor: isDark
+                          ? Colors.black
+                          : const Color(0xFFD4A373),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
